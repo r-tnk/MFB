@@ -86,25 +86,7 @@ def draw_res(datafile, resfile):
             ax[row][col].errorbar(data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['T'], data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['rho'], yerr = data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['rho_err'], fmt=com_fmt[comp], markersize=2, capsize=4, ecolor=line_col[comp])     
             ax[row+1][col].plot(res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['T'], res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['phase'], line_col[comp], lw=1.0, alpha = 0.7)
             ax[row+1][col].errorbar(data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['T'], data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['phase'], yerr = data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['phase_err'], fmt=com_fmt[comp], markersize=2, capsize=4, ecolor=line_col[comp])     
-        
-        #comp = 'ZYY'
-        #ax[row][col].plot(res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['T'], res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['rho'], 'magenta', lw=1.0, alpha = 0.7)
-        #ax[row][col].errorbar(data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['T'], data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['rho'], yerr = data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['rho_err'], fmt='mo', capsize=4, ecolor='magenta')     
-        #ax[row+1][col].plot(res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['T'], res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['phase'], 'magenta', lw=1.0, alpha = 0.7)
-        #ax[row+1][col].errorbar(data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['T'], data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['phase'], yerr = data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['phase_err'], fmt='mo', capsize=4, ecolor='magenta')     
-        #
-        #comp = 'ZXY'
-        #ax[row][col].plot(res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['T'], res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['rho'], 'red', lw=1.0)
-        #ax[row][col].errorbar(data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['T'], data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['rho'], yerr = data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['rho_err'], fmt='ro', capsize=4, ecolor='red')     
-        #ax[row+1][col].plot(res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['T'], res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['phase'], 'red', lw=1.0)
-        #ax[row+1][col].errorbar(data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['T'], data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['phase'], yerr = data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['phase_err'], fmt='ro', capsize=4, ecolor='red')     
-        #
-        #comp = 'ZYX'
-        #ax[row][col].plot(res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['T'], res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['rho'], 'blue', lw=1.0)
-        #ax[row][col].errorbar(data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['T'], data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['rho'], yerr = data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['rho_err'], fmt='bo', capsize=4, ecolor='blue')     
-        #ax[row+1][col].plot(res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['T'], res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['phase'], 'blue', lw=1.0)
-        #ax[row+1][col].errorbar(data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['T'], data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['phase'], yerr = data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['phase_err'], fmt='bo', capsize=4, ecolor='blue')     
-       
+           
         ax[row][col].set_xlim(xmin,xmax)
         ax[row][col].set_xscale('log')
         ax[row][col].set_ylim(ymin,ymax)
@@ -113,34 +95,21 @@ def draw_res(datafile, resfile):
         ax[row+1][col].set_xscale('log')
         ax[row+1][col].set_ylim(-180,180)
         ax[row][col].set_title(name)
-        i += 1
-    fig.tight_layout()
-    plt.show()
 
-    #ax2 = fig.add_subplot(122)
-    #CL1=df.loc[:,"col1"]
-    #CL2=df.loc[:,"col2"]
-    #CL3=df.loc[:,"col3"]
-    #CL4=df.loc[:,"col4"]
-    #CL5=df.loc[:,"col5"]
-    #ax2.plot(CL1,CL2,"red",lw = 1.0)
-    #ax2.plot(CL1,CL3,"green",lw = 1.0)
-    #ax2.plot(CL1,CL4,"orange",lw = 1.0)
-    #ax2.errorbar(CL1,CL2,yerr=CL5,xerr=None,fmt="o",ms=2.0, mfc="b",
-    #             elinewidth=1.0, ecolor='blue',capsize=2.0)
-    #ax2.errorbar(CL1,CL3,yerr=CL5,xerr=None,fmt="o",ms=2.0, mfc="b",
-    #             elinewidth=1.0, ecolor='blue',capsize=2.0)
-    #ax2.errorbar(CL1,CL4,yerr=CL5,xerr=None,fmt="o",ms=2.0, mfc="b",
-    #             elinewidth=1.0, ecolor='blue',capsize=2.0)
-    #sns.relplot(data=data,kind='scatter', x='T', y='rho', col = 'STATION', hue = 'COMPONENT', col_wrap=5)
-    #xmin = data['T'].min()*0.5
-    #xmax = data['T'].max()*2.0
-    #ymin = data['rho'].min()*0.5
-    #ymax = data['rho'].max()*2.0
-    #plt.xlim(xmin, xmax)
-    #plt.xscale('log')
-    #plt.ylim(ymin, ymax)
-    #plt.yscale('log')
+        if row == (len(g)//6 + 1) * 2 -2 and col == 0:
+            ax[row][col].tick_params(labelbottom=False, labelright=False, labeltop=False)
+            ax[row+1][col].tick_params(labelright=False, labeltop=False)
+        elif row == (len(g)//6 + 1) * 2 -2:
+            ax[row][col].tick_params(labelbottom=False, labelleft=False, labelright=False, labeltop=False)
+            ax[row+1][col].tick_params(labelleft=False, labelright=False, labeltop=False)
+        elif col == 0:
+            ax[row][col].tick_params(labelbottom=False, labelright=False, labeltop=False)
+            ax[row+1][col].tick_params(labelbottom=False, labelright=False, labeltop=False)
+        else:
+            ax[row][col].tick_params(labelbottom=False, labelleft=False, labelright=False, labeltop=False)
+            ax[row+1][col].tick_params(labelbottom=False, labelleft=False, labelright=False, labeltop=False)
+        i += 1
+    plt.show()
 
 def calc_rho(data):    
     data['amp'] = np.sqrt(data['real'] * data['real'] + data['imag'] * data['imag'])
