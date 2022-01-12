@@ -77,6 +77,7 @@ def draw_res(datafile, resfile):
     comp_list = ('ZXX', 'ZYY', 'ZXY', 'ZYX')
     fig, ax = plt.subplots((len(g)//6 + 1) * 2, 6)
     fig.suptitle('Cal vs. Obs')
+    fig.subplots_adjust(hspace=0.4, wspace=0.1)
     i =0
     for name, group in g:
         row = (i//6)*2
