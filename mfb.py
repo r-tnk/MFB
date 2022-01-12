@@ -100,12 +100,16 @@ def draw_res(datafile, resfile):
         if row == (len(g)//6 + 1) * 2 -2 and col == 0:
             ax[row][col].tick_params(labelbottom=False, labelright=False, labeltop=False)
             ax[row+1][col].tick_params(labelright=False, labeltop=False)
+            ax[row][col].set_ylabel("Apparent resistivity\n[log \u03a9 m]")
+            ax[row+1][col].set_ylabel("Phase")
         elif row == (len(g)//6 + 1) * 2 -2:
             ax[row][col].tick_params(labelbottom=False, labelleft=False, labelright=False, labeltop=False)
             ax[row+1][col].tick_params(labelleft=False, labelright=False, labeltop=False)
         elif col == 0:
             ax[row][col].tick_params(labelbottom=False, labelright=False, labeltop=False)
             ax[row+1][col].tick_params(labelbottom=False, labelright=False, labeltop=False)
+            ax[row][col].set_ylabel("Apparent resistivity\n[log \u03a9 m]")
+            ax[row+1][col].set_ylabel("Phase")
         else:
             ax[row][col].tick_params(labelbottom=False, labelleft=False, labelright=False, labeltop=False)
             ax[row+1][col].tick_params(labelbottom=False, labelleft=False, labelright=False, labeltop=False)
