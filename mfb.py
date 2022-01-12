@@ -8,6 +8,7 @@ import math
 from pyevtk.hl import gridToVTK
 from pyevtk.hl import pointsToVTK
 import configparser
+import matplotlib as mpl
 
 def main():
     global settings, dict_vars
@@ -78,6 +79,7 @@ def draw_res(datafile, resfile):
     fig, ax = plt.subplots((len(g)//6 + 1) * 2, 6)
     fig.suptitle('Cal vs. Obs')
     fig.subplots_adjust(hspace=0.4, wspace=0.1)
+    ax[:][:].axis("off")
     i =0
     for name, group in g:
         row = (i//6)*2
@@ -92,9 +94,11 @@ def draw_res(datafile, resfile):
         ax[row][col].set_xscale('log')
         ax[row][col].set_ylim(ymin,ymax)
         ax[row][col].set_yscale('log')
+        ax[row][col].yaxis.set_major_locator(mpl.ticker.LogLocator(numticks=13))
         ax[row+1][col].set_xlim(xmin,xmax)
         ax[row+1][col].set_xscale('log')
         ax[row+1][col].set_ylim(-180,180)
+        ax[row+1][col].set_yticks( np.arange(-180, 181, 60))
         ax[row][col].set_title(name)
 
         if row == (len(g)//6 + 1) * 2 -2 and col == 0:
@@ -102,9 +106,11 @@ def draw_res(datafile, resfile):
             ax[row+1][col].tick_params(labelright=False, labeltop=False)
             ax[row][col].set_ylabel("Apparent resistivity\n[log \u03a9 m]")
             ax[row+1][col].set_ylabel("Phase")
+            ax[row+1][col].set_xlabel("Period [s]")
         elif row == (len(g)//6 + 1) * 2 -2:
             ax[row][col].tick_params(labelbottom=False, labelleft=False, labelright=False, labeltop=False)
             ax[row+1][col].tick_params(labelleft=False, labelright=False, labeltop=False)
+            ax[row+1][col].set_xlabel("Period [s]")
         elif col == 0:
             ax[row][col].tick_params(labelbottom=False, labelright=False, labeltop=False)
             ax[row+1][col].tick_params(labelbottom=False, labelright=False, labeltop=False)
@@ -114,6 +120,7 @@ def draw_res(datafile, resfile):
             ax[row][col].tick_params(labelbottom=False, labelleft=False, labelright=False, labeltop=False)
             ax[row+1][col].tick_params(labelbottom=False, labelleft=False, labelright=False, labeltop=False)
         i += 1
+
     plt.show()
 
 def calc_rho(data):    
