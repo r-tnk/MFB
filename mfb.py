@@ -159,6 +159,10 @@ def calc_rho(data):
 #    }
 #    return dict_vars
 
+def read_ini(config_path):
+    config = configparser.ConfigParser()
+    config.read(config_path, encoding='utf-8')
+
 def write_ini(config_path, dict_vars, section_name):
     config = configparser.ConfigParser()
     config.read(config_path, encoding='utf-8')
@@ -259,9 +263,9 @@ def get_ws_cov(zblocks, ns_set, ew_set, z_set, sea_level, z_corner):
                 msk[:,:,k] = np.where(zblocks <= k, cov['land'], cov['sea'])
     return(rho, msk)
 
-def save_cov(dir_conf, ns_set, ew_set, z_set, msk):
-    covfile = dir_conf['save'] + settings['covfile']
-    backcov = dir_conf['save'] + settings['covtxt']
+def save_cov(settings,ns_set, ew_set, z_set, msk):
+    covfile = settings['save_dir'] + settings['covfile']
+    backcov = settings['save_dir'] + settings['covtxt']
     with open(covfile, 'w') as f:
         smooth = float(settings['smooth'])
         ns_smooth = np.full(z_set.shape, smooth)
@@ -307,8 +311,8 @@ def save_cov(dir_conf, ns_set, ew_set, z_set, msk):
             np.savetxt(f, msk[:,:,k], fmt = '%2d', newline = '\n ')
             f.write('\n ')
 
-def save_ws(dir_conf,ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, rho):
-    wsfile = dir_conf['save'] + settings['wsfile']
+def save_ws(settings,ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, rho):
+    wsfile = settings['save_dir'] + settings['wsfile']
     with open(wsfile, 'w') as f:
         f.write(' #3D MT model\n')
         f.write(' %3d %3d %3d   0 LOGE\n ' %(int(len(ns_set)), int(len(ew_set)), int(len(z_set))))

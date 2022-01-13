@@ -3,7 +3,8 @@ import mfb
 
 global settings, dicti_vars
 layout = [
-   [sg.T("Choose setting file(*.ini)"), sg.InputText(), sg.FileBrowse(key="ini_path")],
+   [sg.T("Choose setting file(*.ini)"), sg.InputText("Choose setting file(*.ini)", key='-file-', enable_events=True), sg.FileBrowse(key="ini_path")],
+   [sg.Combo(values=[''], key='SECTION')],
    [sg.Button('GO'), sg.Button('Cancel')],
 ]
 
@@ -17,8 +18,11 @@ while True:
     event, values = window.read()
     if event == sg.WINDOW_CLOSED or event == 'Cancel':
         break
-    elif event == 'GO':
-        mfb.write_ini(values['ini_path'], dict_vars, section_name)
+
+    if event == '-file-':
+        config = mfb.read_ini(values['ini_path'])
+        print(config.sections())
+        window.find_element('SECTION').Update(values=config.sections())
 
 # 画面から削除して終了
 window.close()
