@@ -14,7 +14,7 @@ def main():
     global settings, dict_vars
     ini_path = '/Users/ryo/Desktop/MFB/settings.ini'
     dict_vars = {}
-    set_smooth()
+    set_smooth(dict_vars)
     section_name = 'SMOOTH4'
     write_ini(ini_path, dict_vars, section_name)
     config = read_ini(ini_path)
@@ -58,7 +58,7 @@ def main():
     draw_res(datafile, resfile)
 
 
-def set_smooth():
+def set_smooth(dict_vars):
     dict_vars['smooth'] = '0.4'
 
 def draw_res(datafile, resfile):
