@@ -12,7 +12,7 @@ import matplotlib as mpl
 
 def main():
     global settings, dict_vars
-    ini_path = '/Users/ryotanaka/Desktop/MFB/App211213/settings.ini'
+    ini_path = '/Users/ryo/Desktop/MFB/settings.ini'
     dict_vars = {}
     set_smooth()
     section_name = 'SMOOTH4'
@@ -51,8 +51,10 @@ def main():
     #pointsfile = '/Users/ryotanaka/Desktop/MFB/App211213/obscor.txt'
     #fout = dir_conf['save'] + 'obs'
     #point2vtk(pointsfile,sea_level, fout)
-    datafile = '/Users/ryotanaka/Desktop/MFB/App211213/DATA.dat'
-    resfile = '/Users/ryotanaka/Desktop/MFB/App211213/TKC_NLCG_026.dat'
+    #datafile = '/Users/ryotanaka/Desktop/MFB/App211213/DATA.dat'
+    #resfile = '/Users/ryotanaka/Desktop/MFB/App211213/TKC_NLCG_026.dat'
+    datafile = '/Users/ryo/Desktop/MFB/DATA.dat'
+    resfile = '/Users/ryo/Desktop/MFB/TKC_NLCG_026.dat'
     draw_res(datafile, resfile)
 
 
@@ -94,8 +96,10 @@ def draw_res(datafile, resfile):
         ax[row][col].set_ylim(ymin,ymax)
         ax[row][col].set_yscale('log')
         ax[row][col].yaxis.set_major_locator(mpl.ticker.LogLocator(numticks=13))
+        ax[row][col].xaxis.set_major_locator(mpl.ticker.LogLocator(numticks=13))
         ax[row+1][col].set_xlim(xmin,xmax)
         ax[row+1][col].set_xscale('log')
+        ax[row+1][col].xaxis.set_major_locator(mpl.ticker.LogLocator(numticks=13))
         ax[row+1][col].set_ylim(-180,180)
         ax[row+1][col].set_yticks( np.arange(-180, 181, 60))
         ax[row][col].set_title(name)
@@ -156,7 +160,7 @@ def calc_rho(data):
 #    return dict_vars
 
 def write_ini(config_path, dict_vars, section_name):
-    config = configparser.SafeConfigParser()
+    config = configparser.ConfigParser()
     config.read(config_path, encoding='utf-8')
     config[section_name] = {}
     for k in dict_vars:
@@ -166,7 +170,7 @@ def write_ini(config_path, dict_vars, section_name):
         config.write(f)
 
 def read_ini(config_path):
-    config = configparser.SafeConfigParser()
+    config = configparser.ConfigParser()
     config.read(config_path, encoding='utf-8')
     return config
 
