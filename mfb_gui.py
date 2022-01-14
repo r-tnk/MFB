@@ -31,17 +31,15 @@ layout = [
    [sg.T("wsfile", text_color='black', background_color='azure', size=(17,1), justification='center'), sg.Text(size=(30,1), key='wsfile'), sg.Checkbox('Update to', key='wsfile_up'), sg.InputText("Enter name of wsfile (.ws)", key='wsfile_set')],
    [sg.T("smooth", text_color='black', background_color='azure', size=(17,1), justification='center'), sg.Text(size=(30,1), key='smooth'), sg.Checkbox('Update to', key='smooth_up'), sg.InputText("Enter smoothing parameter(0 - 1)", key='smooth_set')],
   
-   [sg.Button('Save Settings'), sg.Button('Make files'), sg.Button('Cancel')],
+   [sg.Button('Save Settings'), sg.Button('Make files'), sg.Button('Done')],
 ]
 
 window = sg.Window("MFBver3.0", layout)
-dict_vars = {}
-mfb.set_smooth(dict_vars)
-section_name = 'SMOOTH5'
+dict_vars ={}
 
 while True:
     event, values = window.read()
-    if event == sg.WINDOW_CLOSED or event == 'Cancel':
+    if event == sg.WINDOW_CLOSED or event == 'Done':
         break
 
     if event == '-file-':
@@ -49,6 +47,7 @@ while True:
         window.find_element('-section-').Update(values=config.sections())
     
     if event == '-section-':
+        section = values['-section-']
         for key in config[values['-section-']]:
             window[key].update(config[values['-section-']][key])
 
@@ -60,12 +59,15 @@ while True:
         for key in config[values['-section-']]:
             if values[key + '_up']:
                 dict_vars[key] = values[key + '_set']
+            else:
+                dict_vars[key] = config[values['-section-']][key]
 
         mfb.write_ini(values['ini_path'], dict_vars, section)
 
     if event == 'Make files':
         config = mfb.read_ini(values['ini_path'])
         settings = config[section]
+        mfb.preprocess(settings)
         
 
             

@@ -18,20 +18,19 @@ def main():
     #write_ini(ini_path, dict_vars, section_name)
     config = read_ini(ini_path)
     settings = config[section_name]
-    ns_set, ew_set, z_set, ns_lim, ew_lim, z_lim = set_initial_xyz(settings)
+    preprocess(settings)
     
 def preprocess(settings):
     ###Pre-process###
     dem, sea_level = get_dem(settings)
     dem = cor_dem(dem, settings)
-    ns_set, ew_set, z_set, ns_lim, ew_lim, z_lim = set_initial_xyz()
     ns0, ew0, z0, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner = set_xyz(settings)
-    zblocks, block_depth, sea_level = cal_zblocks(dir_conf, ns_corner, ew_corner, z_corner, dem, sea_level)
-    obs = cal_obs_point(dir_conf, ns_corner, ew_corner, block_depth)
-    plot_fig(ns_corner, ew_corner, block_depth, sea_level, obs)
+    zblocks, block_depth, sea_level = cal_zblocks(settings, ns_corner, ew_corner, z_corner, dem, sea_level)
+    obs = cal_obs_point(settings, ns_corner, ew_corner, block_depth)
+    plot_fig(settings, ns_corner, ew_corner, block_depth, sea_level, obs)
     rho, msk = get_ws_cov(zblocks, ns_set, ew_set, z_set, sea_level, z_corner)
-    save_ws(dir_conf, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, rho)
-    save_cov(dir_conf, ns_set, ew_set, z_set, msk)
+    save_ws(settings, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, rho)
+    save_cov(settings, ns_set, ew_set, z_set, msk)
     
     ###Post-process###)
     #res = dir_conf['data'] + 'model.ws'
@@ -53,9 +52,9 @@ def preprocess(settings):
     #point2vtk(pointsfile,sea_level, fout)
     #datafile = '/Users/ryotanaka/Desktop/MFB/App211213/DATA.dat'
     #resfile = '/Users/ryotanaka/Desktop/MFB/App211213/TKC_NLCG_026.dat'
-    datafile = '/Users/ryo/Desktop/MFB/DATA.dat'
-    resfile = '/Users/ryo/Desktop/MFB/TKC_NLCG_026.dat'
-    draw_res(datafile, resfile)
+    #datafile = '/Users/ryo/Desktop/MFB/DATA.dat'
+    #resfile = '/Users/ryo/Desktop/MFB/TKC_NLCG_026.dat'
+    #draw_res(datafile, resfile)
 
 
 def set_smooth(dict_vars):
@@ -167,7 +166,7 @@ def read_ini(config_path):
 def write_ini(config_path, dict_vars, section_name):
     config = configparser.ConfigParser()
     config.read(config_path, encoding='utf-8')
-    config[section_name] = {}
+    #config[section_name] = {}
     for k in dict_vars:
         config[section_name][k] = dict_vars[k]
 
@@ -265,8 +264,8 @@ def get_ws_cov(zblocks, ns_set, ew_set, z_set, sea_level, z_corner):
     return(rho, msk)
 
 def save_cov(settings,ns_set, ew_set, z_set, msk):
-    covfile = settings['save_dir'] + settings['covfile']
-    backcov = settings['save_dir'] + settings['covtxt']
+    covfile = settings['save_dir'] + '/' + settings['covfile']
+    backcov = settings['save_dir'] + '/' + settings['covtxt']
     with open(covfile, 'w') as f:
         smooth = float(settings['smooth'])
         ns_smooth = np.full(z_set.shape, smooth)
@@ -313,7 +312,7 @@ def save_cov(settings,ns_set, ew_set, z_set, msk):
             f.write('\n ')
 
 def save_ws(settings,ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, rho):
-    wsfile = settings['save_dir'] + settings['wsfile']
+    wsfile = settings['save_dir'] + '/' + settings['wsfile']
     with open(wsfile, 'w') as f:
         f.write(' #3D MT model\n')
         f.write(' %3d %3d %3d   0 LOGE\n ' %(int(len(ns_set)), int(len(ew_set)), int(len(z_set))))
@@ -328,10 +327,10 @@ def save_ws(settings,ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, rho)
         f.write('%11.3f %11.3f %11.3f\n ' % (ns_corner[0], ew_corner[0], z_corner[0]))
         f.write('0.000\n ')
 
-def cal_obs_point(dir_conf, ns_corner, ew_corner, block_depth):   
-    obs_file = dir_conf['data'] + settings['obsfile']
+def cal_obs_point(settings, ns_corner, ew_corner, block_depth):   
+    obs_file = settings['obsfile']
     obs = pd.read_table(obs_file, delim_whitespace = True, names=('lon', 'lat'))
-    cor_dem(obs)
+    cor_dem(obs, settings)
     for index, row in obs.iterrows():
         j = int(np.where(ew_corner >= row['EW'])[0][0])
         i = int(np.where(ns_corner >= row['NS'])[0][0])
@@ -342,7 +341,7 @@ def cal_obs_point(dir_conf, ns_corner, ew_corner, block_depth):
     obs.to_csv(obscor_file, sep=' ', float_format="%.3f", )
     return(obs)
 
-def plot_fig(ns_corner, ew_corner, block_depth, sea_level, obs):
+def plot_fig(settings, ns_corner, ew_corner, block_depth, sea_level, obs):
     fig, ax = plt.subplots(figsize=(15, 15))
     cs = ax.pcolormesh(ns_corner, ew_corner, block_depth, cmap='gist_earth_r', edgecolors="w", linewidth=0.01)
     ax.set_xlim([float(settings['x_min']),float(settings['x_max'])])
@@ -355,15 +354,11 @@ def plot_fig(ns_corner, ew_corner, block_depth, sea_level, obs):
     ax.set_aspect('equal')
     plt.show()
 
-def cal_zblocks(dir_conf, ns_corner, ew_corner, z_corner, dem, sea_level):
+def cal_zblocks(settings, ns_corner, ew_corner, z_corner, dem, sea_level):
     depth = np.empty((len(ns_corner)-1, len(ew_corner)-1))
     for i in range(len(ew_corner)-1):
         for j in range(len(ns_corner)-1):
             depth[j,i] = dem[(dem['EW'] > ew_corner[i]) & (dem['EW'] < ew_corner[i+1]) & (dem['NS'] > ns_corner[j]) & (dem['NS'] < ns_corner[j+1])]['depth'].mean()
-    print(depth.shape)
-    #imputer = KNNImputer(n_neighbors=2)
-    #depth = imputer.fit_transform(depth)
-    #print(depth.shape)
     df = pd.DataFrame(depth)
     df_inter = df.interpolate(limit_direction='both')
     df = df_inter.interpolate(limit_direction='both', axis=1)
@@ -376,7 +371,7 @@ def cal_zblocks(dir_conf, ns_corner, ew_corner, z_corner, dem, sea_level):
         for j in range(len(ns_corner)-1):
             zblocks[j,i] = np.where(z_corner >= depth[j,i])[0][0]
             block_depth[j,i] = z_corner[int(zblocks[j,i])]
-    with open(dir_conf['save'] + 'sl.txt', 'w') as f:
+    with open(settings['save_dir'] + '/sl.txt', 'w') as f:
         f.write('%.3f' % sea_level)
     return(zblocks, block_depth, sea_level)            
 
