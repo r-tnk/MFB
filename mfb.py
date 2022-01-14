@@ -11,27 +11,27 @@ import configparser
 import matplotlib as mpl
 
 def main():
-    global settings, dict_vars
     ini_path = '/Users/ryo/Desktop/MFB/settings.ini'
     dict_vars = {}
     set_smooth(dict_vars)
-    section_name = 'SMOOTH4'
-    write_ini(ini_path, dict_vars, section_name)
+    section_name = 'TEST'
+    #write_ini(ini_path, dict_vars, section_name)
     config = read_ini(ini_path)
     settings = config[section_name]
-    dir_conf = set_dir()
+    ns_set, ew_set, z_set, ns_lim, ew_lim, z_lim = set_initial_xyz(settings)
     
+def preprocess(settings):
     ###Pre-process###
-    #dem, sea_level = get_dem(dir_conf)
-    #dem = cor_dem(dem)
-    #ns_set, ew_set, z_set, ns_lim, ew_lim, z_lim = set_initial_xyz()
-    #ns0, ew0, z0, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner = set_xyz(ns_set, ew_set, z_set, ns_lim, ew_lim, z_lim)
-    #zblocks, block_depth, sea_level = cal_zblocks(dir_conf, ns_corner, ew_corner, z_corner, dem, sea_level)
-    #obs = cal_obs_point(dir_conf, ns_corner, ew_corner, block_depth)
-    #plot_fig(ns_corner, ew_corner, block_depth, sea_level, obs)
-    #rho, msk = get_ws_cov(zblocks, ns_set, ew_set, z_set, sea_level, z_corner)
-    #save_ws(dir_conf, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, rho)
-    #save_cov(dir_conf, ns_set, ew_set, z_set, msk)
+    dem, sea_level = get_dem(settings)
+    dem = cor_dem(dem, settings)
+    ns_set, ew_set, z_set, ns_lim, ew_lim, z_lim = set_initial_xyz()
+    ns0, ew0, z0, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner = set_xyz(ns_set, ew_set, z_set, ns_lim, ew_lim, z_lim)
+    zblocks, block_depth, sea_level = cal_zblocks(dir_conf, ns_corner, ew_corner, z_corner, dem, sea_level)
+    obs = cal_obs_point(dir_conf, ns_corner, ew_corner, block_depth)
+    plot_fig(ns_corner, ew_corner, block_depth, sea_level, obs)
+    rho, msk = get_ws_cov(zblocks, ns_set, ew_set, z_set, sea_level, z_corner)
+    save_ws(dir_conf, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, rho)
+    save_cov(dir_conf, ns_set, ew_set, z_set, msk)
     
     ###Post-process###)
     #res = dir_conf['data'] + 'model.ws'
@@ -162,6 +162,7 @@ def calc_rho(data):
 def read_ini(config_path):
     config = configparser.ConfigParser()
     config.read(config_path, encoding='utf-8')
+    return config
 
 def write_ini(config_path, dict_vars, section_name):
     config = configparser.ConfigParser()
@@ -396,7 +397,9 @@ def set_xyz(ns_set, ew_set, z_set, ns_lim, ew_lim, z_lim):
     z_corner = set_corner(z0, z_set)
     return(ns0, ew0, z0, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner)
 
-def set_initial_xyz():
+def set_initial_xyz(settings):
+    ns = pd.read_table(settings['ns_set'])
+    print(ns)
     ns_set = np.full(10, 250.)
     ns_set = np.append(ns_set, np.full(10, 400.))
     ew_set = np.full(10, 250.)
@@ -420,7 +423,7 @@ def cal_lim(lim, xyset):
         xyset = np.append(xyset, xyset[-1]*1.4)
     return(xyset)
         
-def cor_dem(dem):
+def cor_dem(dem, settings):
     origin = {'lon': float(settings['origin_lon']), 'lat': float(settings['origin_lat'])}
     wgs84 = pyproj.Proj(init='EPSG:4326')  # WGS84 緯度経度
     cartesian = pyproj.Proj(init=settings['cartesian'])  # JPR11 緯度経度
@@ -432,9 +435,9 @@ def cor_dem(dem):
     dem['NS'] = dem['NS'] - origin_y
     return dem
     
-def get_dem(dir_conf):
-    sea_file = dir_conf['data'] + settings['seafile']
-    dem_file = dir_conf['data'] + settings['demfile']
+def get_dem(settings):
+    sea_file = settings['seafile']
+    dem_file = settings['demfile']
     local_dem = pd.read_table(dem_file, delim_whitespace = True, names=('lon', 'lat', 'hight'))
     sea_dem = pd.read_table(sea_file, delim_whitespace = True, names=('q', 'lat', 'lon', 'depth'))
     local_dem = local_dem[local_dem.hight != -9999.00]
