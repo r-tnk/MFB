@@ -25,7 +25,7 @@ def preprocess(settings):
     dem, sea_level = get_dem(settings)
     dem = cor_dem(dem, settings)
     ns_set, ew_set, z_set, ns_lim, ew_lim, z_lim = set_initial_xyz()
-    ns0, ew0, z0, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner = set_xyz(ns_set, ew_set, z_set, ns_lim, ew_lim, z_lim)
+    ns0, ew0, z0, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner = set_xyz(settings)
     zblocks, block_depth, sea_level = cal_zblocks(dir_conf, ns_corner, ew_corner, z_corner, dem, sea_level)
     obs = cal_obs_point(dir_conf, ns_corner, ew_corner, block_depth)
     plot_fig(ns_corner, ew_corner, block_depth, sea_level, obs)
@@ -380,7 +380,26 @@ def cal_zblocks(dir_conf, ns_corner, ew_corner, z_corner, dem, sea_level):
         f.write('%.3f' % sea_level)
     return(zblocks, block_depth, sea_level)            
 
-def set_xyz(ns_set, ew_set, z_set, ns_lim, ew_lim, z_lim):    
+def set_xyz(settings):
+    ns_set = np.empty(0)
+    ew_set = np.empty(0)
+    z_set = np.empty(0)
+    ns = pd.read_table(settings['ns_set'], delim_whitespace = True)
+    for index, row in ns.iterrows():
+        ns_set = np.append(ns_set, np.full(int(row['num']), float(row['length'])))
+
+    ew = pd.read_table(settings['ew_set'], delim_whitespace = True)
+    for index, row in ew.iterrows():
+        ew_set = np.append(ew_set, np.full(int(row['num']), float(row['length'])))
+
+    z = pd.read_table(settings['z_set'], delim_whitespace = True)
+    for index, row in z.iterrows():
+        z_set = np.append(z_set, np.full(int(row['num']), float(row['length'])))
+    
+    ns_lim = float(settings['ns_lim'])
+    ew_lim = float(settings['ew_lim'])
+    z_lim = float(settings['z_lim'])
+
     znum0 = z_set.size
     z0 = z_set[-1]
     ns_set = cal_lim(ns_lim, ns_set)
@@ -396,20 +415,6 @@ def set_xyz(ns_set, ew_set, z_set, ns_lim, ew_lim, z_lim):
     ew_corner = set_corner(ew0, ew_set)
     z_corner = set_corner(z0, z_set)
     return(ns0, ew0, z0, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner)
-
-def set_initial_xyz(settings):
-    ns = pd.read_table(settings['ns_set'])
-    print(ns)
-    ns_set = np.full(10, 250.)
-    ns_set = np.append(ns_set, np.full(10, 400.))
-    ew_set = np.full(10, 250.)
-    ew_set = np.append(ew_set, np.full(10, 400.))
-    z_set = np.full(28, 50.)
-    z_set = np.append(z_set, np.full(10, 100.))
-    ns_lim = float(settings['ns_lim'])
-    ew_lim = float(settings['ew_lim'])
-    z_lim = float(settings['z_lim'])
-    return(ns_set, ew_set, z_set, ns_lim, ew_lim, z_lim)
 
 def set_corner(xyz0, xyzset):
     corner = np.empty(len(xyzset)+1)
@@ -446,16 +451,6 @@ def get_dem(settings):
     sea_dem['depth'] = sea_dem['depth'] + sea_level
     dem = pd.merge(local_dem, sea_dem, how='outer')
     return (dem,sea_level)
-    
-
-def set_dir():
-    dir_conf = {
-    'work' : settings['work_dir'],
-    'data' : settings['data_dir'],
-    'save' : settings['save_dir']
-    }
-
-    return dir_conf
 
 if __name__ == "__main__":
     main()
