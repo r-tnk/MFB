@@ -5,8 +5,7 @@ import mfb
 sg.theme('dark')
 sg.set_options(font=('Meiriyo UI', 14))
 
-global settings, dicti_vars
-layout = [
+tab1 = sg.Tab('Pre-Process', [
    [sg.InputText("Choose setting file(*.ini)", key='-file-', enable_events=True,), sg.FileBrowse(key="ini_path")],
    [sg.Combo(values=[''], size=(15,1), key='-section-', enable_events=True), sg.Checkbox('Create new section', key='newsec'), sg.InputText('Enter name of new section', key='sec_set')],
    [sg.T("save_dir", text_color='black', background_color='azure', size=(17,1), justification='center'), sg.Text(size=(30,1), key='save_dir'), sg.Checkbox('Update to', key='save_dir_up'), sg.InputText("Set directory to save"), sg.FolderBrowse(key="save_dir_set")],
@@ -32,8 +31,14 @@ layout = [
    [sg.T("smooth", text_color='black', background_color='azure', size=(17,1), justification='center'), sg.Text(size=(30,1), key='smooth'), sg.Checkbox('Update to', key='smooth_up'), sg.InputText("Enter smoothing parameter(0 - 1)", key='smooth_set')],
   
    [sg.Button('Save Settings'), sg.Button('Make files'), sg.Button('Done')],
-]
+])
 
+tab2 = sg.Tab('Post-process',[
+    [sg.InputText("Choose setting file(*.ini)", key='-file-', enable_events=True,), sg.FileBrowse(key="ini_path")],
+    [sg.Combo(values=[''], size=(15,1), key='-section-', enable_events=True), sg.Checkbox('Create new section', key='newsec'), sg.InputText('Enter name of new section', key='sec_set')]
+])
+
+layout = [[sg.TabGroup ([[tab1 ,tab2]])]]
 window = sg.Window("MFBver3.0", layout)
 dict_vars ={}
 
