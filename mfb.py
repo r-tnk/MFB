@@ -208,17 +208,22 @@ def rho2vtk(ws, ns_corner, ew_corner, z_corner, sea_level, vtr):
         ws[:,:,k] = np.fliplr(ws[:,:,k].T)
     gridToVTK(vtr, ew_corner, ns_corner, sea_level-z_corner, cellData = {"resistivity" : np.log10(np.exp(ws))})
 
-def mdl2mdl(ws, cov):
+def mdl2mdl(ws, cov, change_condition):
     cov_trans = np.empty_like(ws)
     for k in range(ws.shape[2]):
         cov_trans[0:ws.shape[0],:,k] = np.flipud(cov[ws.shape[0]*(k):ws.shape[0]*(k+1),:])
-    ns_s = 22
-    ns_e = 38
-    ew_s = 20
-    ew_e = 40
-    z_s = 10
-    z_e = 26
-    ws_mod = np.where(cov_trans == 1, 1., ws)
+    ns_s = change_condition['ns_s']
+    ns_e = change_condition['ns_e']
+    ew_s = change_condition['ew_s']
+    ew_e = change_condition['ew_w']
+    z_s = change_condition['z_s']
+    z_e = change_condition['z_e']
+    const = change_condition['const']
+    factor = change_condition['factor']
+    if const:
+        ws_mod = np.where(cov_trans == 1, factor, ws)
+    else:
+        ws_mod = np.where(cov_trans == 1, ws*factor, ws)
     ws[ns_s:ns_e, ew_s:ew_e, z_s:z_e] = ws_mod[ns_s:ns_e, ew_s:ew_e, z_s:z_e]
     return(ws)
 
