@@ -1,5 +1,5 @@
 from mimetypes import init
-from os import name
+import os
 import pandas as pd
 import pyproj
 import numpy as np
@@ -25,6 +25,12 @@ def preprocess(settings):
     rho, msk = get_ws_cov(zblocks, ns_set, ew_set, z_set, sea_level, z_corner)
     save_ws(settings, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, rho)
     save_cov(settings, ns_set, ew_set, z_set, msk)
+    for file in settings['pointfiles'].split(';'):
+        points = pd.read_table(file, delim_whitespace = True)
+        points = cor_dem(points, settings)
+        fout = settings['save_dir'] + '/' + os.path.basename(file)[:-4] + 'cor.txt'
+        points.to_csv(fout, sep=' ', float_format="%.3f")
+
     
 def mod_mdl(settings):
     res = settings['in_wsfile']
@@ -123,7 +129,7 @@ def read_ini(config_path):
 def write_ini(config_path, dict_vars, section_name):
     config = configparser.ConfigParser()
     config.read(config_path, encoding='utf-8')
-    #config[section_name] = {}
+    config[section_name] = {}
     for k in dict_vars:
         config[section_name][k] = dict_vars[k]
 
@@ -136,8 +142,9 @@ def read_ini(config_path):
     return config
 
 def hypo(fin, fout):
+    # names=('EW', 'NS', 'depth', 'm')
     hfile = fin
-    hypoth = pd.read_table(hfile, delim_whitespace = True, names=('EW', 'NS', 'depth', 'm'), dtype=float)
+    hypoth = pd.read_table(hfile, delim_whitespace = True, dtype=float)
     x = hypoth['EW'].to_numpy()
     y = hypoth['NS'].to_numpy()
     z = hypoth['depth'].to_numpy()
@@ -290,7 +297,8 @@ def save_ws(settings,ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, rho)
 
 def cal_obs_point(settings, ns_corner, ew_corner, block_depth):   
     obs_file = settings['obsfile']
-    obs = pd.read_table(obs_file, delim_whitespace = True, names=('lon', 'lat'))
+    #names=('lon', 'lat')
+    obs = pd.read_table(obs_file, delim_whitespace = True)
     cor_dem(obs, settings)
     for index, row in obs.iterrows():
         j = int(np.where(ew_corner >= row['EW'])[0][0])
@@ -298,7 +306,9 @@ def cal_obs_point(settings, ns_corner, ew_corner, block_depth):
         obs.at[index, 'EW_reloc'] = (ew_corner[j-1] + ew_corner[j])/2.
         obs.at[index, 'NS_reloc'] = (ns_corner[i-1] + ew_corner[i])/2.
         obs.at[index, 'depth'] = block_depth[i-1,j-1]
-    obscor_file = obs_file[:-4] + 'cor.txt'
+    obs['EW'] = obs['EW_reloc']
+    obs['NS'] = obs['NS_reloc']
+    obscor_file = settings['save_dir'] + '/' + os.path.basename(obs_file)[:-4] + 'cor.txt'
     obs.to_csv(obscor_file, sep=' ', float_format="%.3f", )
     return(obs)
 
@@ -309,7 +319,7 @@ def plot_fig(settings, ns_corner, ew_corner, block_depth, sea_level, obs):
     ax.set_ylim([float(settings['y_min']),float(settings['y_max'])])
     fig.colorbar(cs, label = 'depth [m]')
     ax.text(0.0, 1.05, "sea_level = %.1f m" % (sea_level), ha='left', transform=ax.transAxes)
-    sns.scatterplot(data=obs, x='EW_reloc', y='NS_reloc', ax=ax)
+    sns.scatterplot(data=obs, x='EW', y='NS', ax=ax)
     ax.set_xlabel('EW [m]')
     ax.set_ylabel('NS [m]')
     ax.set_aspect('equal')
@@ -397,13 +407,15 @@ def cor_dem(dem, settings):
     return dem
     
 def get_dem(settings):
+    #names=('q', 'lat', 'lon', 'depth')
     sea_file = settings['seafile']
+    #names=('lon', 'lat', 'height')
     dem_file = settings['demfile']
-    local_dem = pd.read_table(dem_file, delim_whitespace = True, names=('lon', 'lat', 'hight'))
-    sea_dem = pd.read_table(sea_file, delim_whitespace = True, names=('q', 'lat', 'lon', 'depth'))
-    local_dem = local_dem[local_dem.hight != -9999.00]
-    sea_level = local_dem['hight'].max()
-    local_dem['depth'] = -local_dem['hight'] + sea_level
+    local_dem = pd.read_table(dem_file, delim_whitespace = True)
+    sea_dem = pd.read_table(sea_file, delim_whitespace = True)
+    local_dem = local_dem[local_dem.height != -9999.00]
+    sea_level = local_dem['height'].max()
+    local_dem['depth'] = -local_dem['height'] + sea_level
     sea_dem['depth'] = sea_dem['depth'] + sea_level
     dem = pd.merge(local_dem, sea_dem, how='outer')
     return (dem,sea_level)

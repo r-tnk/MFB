@@ -31,8 +31,8 @@
 - PysimpleGUI
 
 ## 使い方
-1. DEMと海底地形データ（必要であれば）を用意
-2. 観測点の緯度経度が書かれたファイルを用意
+1. DEM(headerに[lon lat height]が必要）と海底地形データ（必要であれば。headerに[lon lat depth]が必要）を用意
+2. 観測点の緯度経度（headerにlon latが必要）が書かれたファイルを用意
 3. 変換先の直交座標系のEPSGコードを調査(https://epsg.io/)
 4. MFBを起動
 
@@ -41,7 +41,7 @@
 5. GUI上で設定値を更新（Save Settingsボタンを押す）
 6. ファイルを作成（Make Filesボタンを押す）
 7. ModEMでインバージョン
-8. MFBで後処理
+8. MFBで後処理（震源ファイルにはheader [lon lat depth m]が必要。mはマグニチュードの意味、その他の点を表すファイルにはheader [lon lat height]が必要。）
 
 ## インストール
 

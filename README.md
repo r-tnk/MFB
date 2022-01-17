@@ -33,8 +33,8 @@ Simple GUI software to carry out pre- and post- procesess for ModEM (Egbert and 
 
 ## Usage
 
-1. Prepare DEM and bathymetry (if needed).
-2. Prepare the file with the latitude and longitude of the observation point.
+1. Prepare DEM including header (lon, lat, height) and bathymetry (if needed) including header (lon, lat, depth).
+2. Prepare the file (including header [lon lat] with the latitude and longitude of the observation point.
 3. Find the EPSG code of the destination Cartesian coordinate system.(https://epsg.io/)
 4. Launch MFB
 
@@ -43,7 +43,7 @@ Simple GUI software to carry out pre- and post- procesess for ModEM (Egbert and 
 5. Configure settings via GUI (Push 'Save Settings' Button)
 6. Make files (Push 'Make files' Button)
 7. Carry out the inversion via ModEM
-8. Carry out post-processes
+8. Carry out post-processes (The file about hypocenters must have header [lon lat depth m], m means magnitude. The file about points must have header [lon lat height].)
 
 ## Installation
 
