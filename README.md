@@ -37,7 +37,7 @@ Simple GUI software to carry out pre- and post- procesess for ModEM (Egbert and 
 3. Find the EPSG code of the destination Cartesian coordinate system.
 4. Launch MFB
 
-    $ python mfb_gui.py
+    `$ python mfb_gui.py`
 
 5. Configure settings via GUI
 6. Make files
