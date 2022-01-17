@@ -188,7 +188,7 @@ while True:
             'z_s':values['z_min'],
             'z_e':values['z_max'],
             'const':const,
-            'factor':values['cf_num']
+            'factor':values['cf_num'],
         }
         mfb.mod_mdl(settings_mdl)
 

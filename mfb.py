@@ -407,13 +407,15 @@ def cor_dem(dem, settings):
     return dem
     
 def get_dem(settings):
+    #names=('q', 'lat', 'lon', 'depth')
     sea_file = settings['seafile']
+    #names=('lon', 'lat', 'height')
     dem_file = settings['demfile']
-    local_dem = pd.read_table(dem_file, delim_whitespace = True, names=('lon', 'lat', 'hight'))
-    sea_dem = pd.read_table(sea_file, delim_whitespace = True, names=('q', 'lat', 'lon', 'depth'))
-    local_dem = local_dem[local_dem.hight != -9999.00]
-    sea_level = local_dem['hight'].max()
-    local_dem['depth'] = -local_dem['hight'] + sea_level
+    local_dem = pd.read_table(dem_file, delim_whitespace = True)
+    sea_dem = pd.read_table(sea_file, delim_whitespace = True)
+    local_dem = local_dem[local_dem.height != -9999.00]
+    sea_level = local_dem['height'].max()
+    local_dem['depth'] = -local_dem['height'] + sea_level
     sea_dem['depth'] = sea_dem['depth'] + sea_level
     dem = pd.merge(local_dem, sea_dem, how='outer')
     return (dem,sea_level)
