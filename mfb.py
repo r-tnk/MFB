@@ -1,3 +1,4 @@
+from mimetypes import init
 from os import name
 import pandas as pd
 import pyproj
@@ -8,55 +9,39 @@ import math
 from pyevtk.hl import gridToVTK
 from pyevtk.hl import pointsToVTK
 import configparser
+import matplotlib as mpl
 
 def main():
-    global settings, dict_vars
-    ini_path = '/Users/ryotanaka/Desktop/MFB/App211213/settings.ini'
-    dict_vars = {}
-    set_smooth()
-    section_name = 'SMOOTH4'
-    write_ini(ini_path, dict_vars, section_name)
-    config = read_ini(ini_path)
-    settings = config[section_name]
-    dir_conf = set_dir()
+    settings = '~/settings.ini'
+    preprocess(settings)
     
+def preprocess(settings):
     ###Pre-process###
-    #dem, sea_level = get_dem(dir_conf)
-    #dem = cor_dem(dem)
-    #ns_set, ew_set, z_set, ns_lim, ew_lim, z_lim = set_initial_xyz()
-    #ns0, ew0, z0, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner = set_xyz(ns_set, ew_set, z_set, ns_lim, ew_lim, z_lim)
-    #zblocks, block_depth, sea_level = cal_zblocks(dir_conf, ns_corner, ew_corner, z_corner, dem, sea_level)
-    #obs = cal_obs_point(dir_conf, ns_corner, ew_corner, block_depth)
-    #plot_fig(ns_corner, ew_corner, block_depth, sea_level, obs)
-    #rho, msk = get_ws_cov(zblocks, ns_set, ew_set, z_set, sea_level, z_corner)
-    #save_ws(dir_conf, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, rho)
-    #save_cov(dir_conf, ns_set, ew_set, z_set, msk)
+    dem, sea_level = get_dem(settings)
+    dem = cor_dem(dem, settings)
+    ns0, ew0, z0, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner = set_xyz(settings)
+    zblocks, block_depth, sea_level = cal_zblocks(settings, ns_corner, ew_corner, z_corner, dem, sea_level)
+    obs = cal_obs_point(settings, ns_corner, ew_corner, block_depth)
+    plot_fig(settings, ns_corner, ew_corner, block_depth, sea_level, obs)
+    rho, msk = get_ws_cov(zblocks, ns_set, ew_set, z_set, sea_level, z_corner)
+    save_ws(settings, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, rho)
+    save_cov(settings, ns_set, ew_set, z_set, msk)
     
-    ###Post-process###)
-    #res = dir_conf['data'] + 'model.ws'
-    #ns0, ew0, z0, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, ws = read_mdl(res)
-    #cov_file = dir_conf['save'] + 'topo.txt'
-    #cov = read_cov(cov_file)
-    #ws = mdl2mdl(ws,cov)
-    #wsfile = dir_conf['save'] + 'm2m.ws' 
-    #save_ws(wsfile, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, ws)
-    #vtr = dir_conf['save'] + 'rho'
-    #gridToVTK(vtr, ns_corner, ew_corner, z_corner, cellData = {"resistivity" : np.log10(np.exp(ws))})
-    #sl = dir_conf['save'] + 'sl.txt'
-    #sea_level = read_sl(sl)
-    #rho2vtk(ws, ns_corner, ew_corner, z_corner, sea_level, vtr)
-    #hypo_ofile = dir_conf['save'] + 'hypo'
-    #hypo(dir_conf, hypo_ofile)
-    #pointsfile = '/Users/ryotanaka/Desktop/MFB/App211213/obscor.txt'
-    #fout = dir_conf['save'] + 'obs'
-    #point2vtk(pointsfile,sea_level, fout)
-    datafile = '/Users/ryotanaka/Desktop/MFB/App211213/DATA.dat'
-    resfile = '/Users/ryotanaka/Desktop/MFB/App211213/TKC_NLCG_026.dat'
-    draw_res(datafile, resfile)
-
-
-def set_smooth():
-    dict_vars['smooth'] = '0.4'
+def mod_mdl(settings):
+    res = settings['in_wsfile']
+    ns0, ew0, z0, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, ws = read_mdl(res)
+    cov_file = settings['covfile']
+    cov = read_cov(cov_file)
+    ws = mdl2mdl(ws, cov, settings)
+    save_ws(settings, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, ws)
+    
+def make_vtr(settings):
+    res = settings['wsfile']
+    ns0, ew0, z0, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, ws = read_mdl(res)    
+    vtr = settings['save_dir'] + '/' + settings['vtr']
+    sl = settings['sl']
+    sea_level = read_sl(sl)
+    rho2vtk(ws, ns_corner, ew_corner, z_corner, sea_level, vtr)
 
 def draw_res(datafile, resfile):
     head = ('T', 'STATION', 'a', 'b', 'NS', 'EW', 'Z', 'COMPONENT', 'real', 'imag', 'err')
@@ -72,69 +57,56 @@ def draw_res(datafile, resfile):
     ymin = data['rho'].min()*0.5
     ymax = data['rho'].max()*2.0
     g = data.groupby('STATION')
+    line_col = {'ZXX':'green', 'ZYY': 'magenta', 'ZXY':'red', 'ZYX':'blue'}
+    com_fmt = {'ZXX':'go', 'ZYY': 'mo', 'ZXY':'ro', 'ZYX':'bo'}
+    comp_list = ('ZXX', 'ZYY', 'ZXY', 'ZYX')
     fig, ax = plt.subplots((len(g)//6 + 1) * 2, 6)
+    fig.suptitle('Cal vs. Obs')
+    fig.subplots_adjust(hspace=0.4, wspace=0.1)
     i =0
     for name, group in g:
         row = (i//6)*2
         col = i%6
-        comp = 'ZXX'
-        ax[row][col].plot(res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['T'], res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['rho'], 'green', lw=1.0, alpha = 0.7)
-        ax[row][col].errorbar(data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['T'], data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['rho'], yerr = data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['rho_err'], fmt='go', capsize=4, ecolor='green')     
-        ax[row+1][col].plot(res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['T'], res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['phase'], 'green', lw=1.0, alpha = 0.7)
-        ax[row+1][col].errorbar(data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['T'], data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['phase'], yerr = data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['phase_err'], fmt='go', capsize=4, ecolor='green')     
-        
-        comp = 'ZYY'
-        ax[row][col].plot(res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['T'], res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['rho'], 'magenta', lw=1.0, alpha = 0.7)
-        ax[row][col].errorbar(data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['T'], data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['rho'], yerr = data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['rho_err'], fmt='mo', capsize=4, ecolor='magenta')     
-        ax[row+1][col].plot(res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['T'], res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['phase'], 'magenta', lw=1.0, alpha = 0.7)
-        ax[row+1][col].errorbar(data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['T'], data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['phase'], yerr = data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['phase_err'], fmt='mo', capsize=4, ecolor='magenta')     
-        
-        comp = 'ZXY'
-        ax[row][col].plot(res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['T'], res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['rho'], 'red', lw=1.0)
-        ax[row][col].errorbar(data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['T'], data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['rho'], yerr = data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['rho_err'], fmt='ro', capsize=4, ecolor='red')     
-        ax[row+1][col].plot(res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['T'], res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['phase'], 'red', lw=1.0)
-        ax[row+1][col].errorbar(data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['T'], data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['phase'], yerr = data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['phase_err'], fmt='ro', capsize=4, ecolor='red')     
-        
-        comp = 'ZYX'
-        ax[row][col].plot(res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['T'], res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['rho'], 'blue', lw=1.0)
-        ax[row][col].errorbar(data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['T'], data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['rho'], yerr = data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['rho_err'], fmt='bo', capsize=4, ecolor='blue')     
-        ax[row+1][col].plot(res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['T'], res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['phase'], 'blue', lw=1.0)
-        ax[row+1][col].errorbar(data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['T'], data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['phase'], yerr = data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['phase_err'], fmt='bo', capsize=4, ecolor='blue')     
-       
+        for comp in comp_list:
+            ax[row][col].plot(res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['T'], res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['rho'], line_col[comp], lw=1.0, alpha = 0.7)
+            ax[row][col].errorbar(data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['T'], data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['rho'], yerr = data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['rho_err'], fmt=com_fmt[comp], markersize=2, capsize=4, ecolor=line_col[comp])     
+            ax[row+1][col].plot(res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['T'], res[(res['STATION'] == name) & (res['COMPONENT'] == comp)]['phase'], line_col[comp], lw=1.0, alpha = 0.7)
+            ax[row+1][col].errorbar(data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['T'], data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['phase'], yerr = data[(data['STATION'] == name) & (data['COMPONENT'] == comp)]['phase_err'], fmt=com_fmt[comp], markersize=2, capsize=4, ecolor=line_col[comp])     
+           
         ax[row][col].set_xlim(xmin,xmax)
         ax[row][col].set_xscale('log')
         ax[row][col].set_ylim(ymin,ymax)
         ax[row][col].set_yscale('log')
+        ax[row][col].yaxis.set_major_locator(mpl.ticker.LogLocator(numticks=13))
+        ax[row][col].xaxis.set_major_locator(mpl.ticker.LogLocator(numticks=13))
         ax[row+1][col].set_xlim(xmin,xmax)
         ax[row+1][col].set_xscale('log')
+        ax[row+1][col].xaxis.set_major_locator(mpl.ticker.LogLocator(numticks=13))
         ax[row+1][col].set_ylim(-180,180)
-        i += 1
-    plt.show()
+        ax[row+1][col].set_yticks( np.arange(-180, 181, 60))
+        ax[row][col].set_title(name)
 
-    #ax2 = fig.add_subplot(122)
-    #CL1=df.loc[:,"col1"]
-    #CL2=df.loc[:,"col2"]
-    #CL3=df.loc[:,"col3"]
-    #CL4=df.loc[:,"col4"]
-    #CL5=df.loc[:,"col5"]
-    #ax2.plot(CL1,CL2,"red",lw = 1.0)
-    #ax2.plot(CL1,CL3,"green",lw = 1.0)
-    #ax2.plot(CL1,CL4,"orange",lw = 1.0)
-    #ax2.errorbar(CL1,CL2,yerr=CL5,xerr=None,fmt="o",ms=2.0, mfc="b",
-    #             elinewidth=1.0, ecolor='blue',capsize=2.0)
-    #ax2.errorbar(CL1,CL3,yerr=CL5,xerr=None,fmt="o",ms=2.0, mfc="b",
-    #             elinewidth=1.0, ecolor='blue',capsize=2.0)
-    #ax2.errorbar(CL1,CL4,yerr=CL5,xerr=None,fmt="o",ms=2.0, mfc="b",
-    #             elinewidth=1.0, ecolor='blue',capsize=2.0)
-    #sns.relplot(data=data,kind='scatter', x='T', y='rho', col = 'STATION', hue = 'COMPONENT', col_wrap=5)
-    #xmin = data['T'].min()*0.5
-    #xmax = data['T'].max()*2.0
-    #ymin = data['rho'].min()*0.5
-    #ymax = data['rho'].max()*2.0
-    #plt.xlim(xmin, xmax)
-    #plt.xscale('log')
-    #plt.ylim(ymin, ymax)
-    #plt.yscale('log')
+        if row == (len(g)//6 + 1) * 2 -2 and col == 0:
+            ax[row][col].tick_params(labelbottom=False, labelright=False, labeltop=False)
+            ax[row+1][col].tick_params(labelright=False, labeltop=False)
+            ax[row][col].set_ylabel("Apparent resistivity\n[log \u03a9 m]")
+            ax[row+1][col].set_ylabel("Phase")
+            ax[row+1][col].set_xlabel("Period [s]")
+        elif row == (len(g)//6 + 1) * 2 -2:
+            ax[row][col].tick_params(labelbottom=False, labelleft=False, labelright=False, labeltop=False)
+            ax[row+1][col].tick_params(labelleft=False, labelright=False, labeltop=False)
+            ax[row+1][col].set_xlabel("Period [s]")
+        elif col == 0:
+            ax[row][col].tick_params(labelbottom=False, labelright=False, labeltop=False)
+            ax[row+1][col].tick_params(labelbottom=False, labelright=False, labeltop=False)
+            ax[row][col].set_ylabel("Apparent resistivity\n[log \u03a9 m]")
+            ax[row+1][col].set_ylabel("Phase")
+        else:
+            ax[row][col].tick_params(labelbottom=False, labelleft=False, labelright=False, labeltop=False)
+            ax[row+1][col].tick_params(labelbottom=False, labelleft=False, labelright=False, labeltop=False)
+        i += 1
+
+    plt.show()
 
 def calc_rho(data):    
     data['amp'] = np.sqrt(data['real'] * data['real'] + data['imag'] * data['imag'])
@@ -144,35 +116,15 @@ def calc_rho(data):
     data['phase_err'] = np.degrees(np.arcsin(data['err']/data['amp']))
     return data
 
-#def set_vars():
-#    dict_vars = {
-    #'work_dir' : '/Users/ryotanaka/Desktop/MFB/App211213/',
-    #'data_dir' : '/Users/ryotanaka/Desktop/MFB/App211213/',
-    #'save_dir' : '/Users/ryotanaka/Desktop/MFB/App211213/',
-    #'demfile' : 'out.xyz',
-    #'seafile' : 'sea.txt',
-    #'obsfile' : 'obs.txt',
-    #'origin_lon' : '141.2413035',
-    #'origin_lat' : '45.1808162',
-    #'cartesian' : 'EPSG:6679',
-    #'ns_lim' : '5.e4',
-    #'ew_lim' : '5.e4',
-    #'z_lim' : '1.0e5',
-    #'x_min' : '-10000',
-    #'x_max' : '10000',
-    #'y_min' : '-10000',
-    #'y_max' : '10000',
-    #'covfile' : 'topo.cov',
-    #'covtxt' : 'topo.txt',
-    #'wsfile' : 'model.ws',
-    #'smooth' : '0.6'
-#    }
-#    return dict_vars
+def read_ini(config_path):
+    config = configparser.ConfigParser()
+    config.read(config_path, encoding='utf-8')
+    return config
 
 def write_ini(config_path, dict_vars, section_name):
-    config = configparser.SafeConfigParser()
+    config = configparser.ConfigParser()
     config.read(config_path, encoding='utf-8')
-    config[section_name] = {}
+    #config[section_name] = {}
     for k in dict_vars:
         config[section_name][k] = dict_vars[k]
 
@@ -180,26 +132,25 @@ def write_ini(config_path, dict_vars, section_name):
         config.write(f)
 
 def read_ini(config_path):
-    config = configparser.SafeConfigParser()
+    config = configparser.ConfigParser()
     config.read(config_path, encoding='utf-8')
     return config
 
-def hypo(dir_conf, fout):
-    hfile = dir_conf['data'] + 'hypo.txt'
-    #hypoth = pd.read_table(hfile, delim_whitespace = True, names=('lon', 'lat', 'depth', 'm'))
+def hypo(fin, fout):
+    hfile = fin
     hypoth = pd.read_table(hfile, delim_whitespace = True, names=('EW', 'NS', 'depth', 'm'), dtype=float)
-    #cor_dem(hypoth)
     x = hypoth['EW'].to_numpy()
     y = hypoth['NS'].to_numpy()
     z = hypoth['depth'].to_numpy()
     m = hypoth['m'].to_numpy()
-    print(x,y,z,m)
     pointsToVTK(fout, x, y, z, data={'magnitude':m})
 
-def point2vtk(pointsfile,sea_level, fout):
-    point = pd.read_table(pointsfile, delim_whitespace = True,  dtype=float)
-    x = point['EW_reloc'].to_numpy()
-    y = point['NS_reloc'].to_numpy()
+def point2vtk(pointsfile, slfile, fout):
+    sea_level = read_sl(slfile)
+    type = {'EW':float, 'NS':float, 'depth':float}
+    point = pd.read_table(pointsfile, delim_whitespace = True,  dtype=type)
+    x = point['EW'].to_numpy()
+    y = point['NS'].to_numpy()
     z = sea_level - point['depth'].to_numpy()
     print(x,y,z)
     pointsToVTK(fout, x, y, z) 
@@ -214,17 +165,22 @@ def rho2vtk(ws, ns_corner, ew_corner, z_corner, sea_level, vtr):
         ws[:,:,k] = np.fliplr(ws[:,:,k].T)
     gridToVTK(vtr, ew_corner, ns_corner, sea_level-z_corner, cellData = {"resistivity" : np.log10(np.exp(ws))})
 
-def mdl2mdl(ws, cov):
+def mdl2mdl(ws, cov, change_condition):
     cov_trans = np.empty_like(ws)
     for k in range(ws.shape[2]):
         cov_trans[0:ws.shape[0],:,k] = np.flipud(cov[ws.shape[0]*(k):ws.shape[0]*(k+1),:])
-    ns_s = 22
-    ns_e = 38
-    ew_s = 20
-    ew_e = 40
-    z_s = 10
-    z_e = 26
-    ws_mod = np.where(cov_trans == 1, 1., ws)
+    ns_s = int(change_condition['ns_s'])
+    ns_e = int(change_condition['ns_e'])
+    ew_s = int(change_condition['ew_s'])
+    ew_e = int(change_condition['ew_e'])
+    z_s = int(change_condition['z_s'])
+    z_e = int(change_condition['z_e'])
+    const = change_condition['const']
+    factor = float(change_condition['factor'])
+    if const:
+        ws_mod = np.where(cov_trans == 1, math.log(factor), ws)
+    else:
+        ws_mod = np.where(cov_trans == 1, np.log(np.exp(ws)*factor), ws)
     ws[ns_s:ns_e, ew_s:ew_e, z_s:z_e] = ws_mod[ns_s:ns_e, ew_s:ew_e, z_s:z_e]
     return(ws)
 
@@ -269,9 +225,9 @@ def get_ws_cov(zblocks, ns_set, ew_set, z_set, sea_level, z_corner):
                 msk[:,:,k] = np.where(zblocks <= k, cov['land'], cov['sea'])
     return(rho, msk)
 
-def save_cov(dir_conf, ns_set, ew_set, z_set, msk):
-    covfile = dir_conf['save'] + settings['covfile']
-    backcov = dir_conf['save'] + settings['covtxt']
+def save_cov(settings,ns_set, ew_set, z_set, msk):
+    covfile = settings['save_dir'] + '/' + settings['covfile']
+    backcov = settings['save_dir'] + '/' + settings['covtxt']
     with open(covfile, 'w') as f:
         smooth = float(settings['smooth'])
         ns_smooth = np.full(z_set.shape, smooth)
@@ -317,8 +273,8 @@ def save_cov(dir_conf, ns_set, ew_set, z_set, msk):
             np.savetxt(f, msk[:,:,k], fmt = '%2d', newline = '\n ')
             f.write('\n ')
 
-def save_ws(dir_conf,ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, rho):
-    wsfile = dir_conf['save'] + settings['wsfile']
+def save_ws(settings,ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, rho):
+    wsfile = settings['save_dir'] + '/' + settings['wsfile']
     with open(wsfile, 'w') as f:
         f.write(' #3D MT model\n')
         f.write(' %3d %3d %3d   0 LOGE\n ' %(int(len(ns_set)), int(len(ew_set)), int(len(z_set))))
@@ -333,10 +289,10 @@ def save_ws(dir_conf,ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, rho)
         f.write('%11.3f %11.3f %11.3f\n ' % (ns_corner[0], ew_corner[0], z_corner[0]))
         f.write('0.000\n ')
 
-def cal_obs_point(dir_conf, ns_corner, ew_corner, block_depth):   
-    obs_file = dir_conf['data'] + settings['obsfile']
+def cal_obs_point(settings, ns_corner, ew_corner, block_depth):   
+    obs_file = settings['obsfile']
     obs = pd.read_table(obs_file, delim_whitespace = True, names=('lon', 'lat'))
-    cor_dem(obs)
+    cor_dem(obs, settings)
     for index, row in obs.iterrows():
         j = int(np.where(ew_corner >= row['EW'])[0][0])
         i = int(np.where(ns_corner >= row['NS'])[0][0])
@@ -347,7 +303,7 @@ def cal_obs_point(dir_conf, ns_corner, ew_corner, block_depth):
     obs.to_csv(obscor_file, sep=' ', float_format="%.3f", )
     return(obs)
 
-def plot_fig(ns_corner, ew_corner, block_depth, sea_level, obs):
+def plot_fig(settings, ns_corner, ew_corner, block_depth, sea_level, obs):
     fig, ax = plt.subplots(figsize=(15, 15))
     cs = ax.pcolormesh(ns_corner, ew_corner, block_depth, cmap='gist_earth_r', edgecolors="w", linewidth=0.01)
     ax.set_xlim([float(settings['x_min']),float(settings['x_max'])])
@@ -360,15 +316,11 @@ def plot_fig(ns_corner, ew_corner, block_depth, sea_level, obs):
     ax.set_aspect('equal')
     plt.show()
 
-def cal_zblocks(dir_conf, ns_corner, ew_corner, z_corner, dem, sea_level):
+def cal_zblocks(settings, ns_corner, ew_corner, z_corner, dem, sea_level):
     depth = np.empty((len(ns_corner)-1, len(ew_corner)-1))
     for i in range(len(ew_corner)-1):
         for j in range(len(ns_corner)-1):
             depth[j,i] = dem[(dem['EW'] > ew_corner[i]) & (dem['EW'] < ew_corner[i+1]) & (dem['NS'] > ns_corner[j]) & (dem['NS'] < ns_corner[j+1])]['depth'].mean()
-    print(depth.shape)
-    #imputer = KNNImputer(n_neighbors=2)
-    #depth = imputer.fit_transform(depth)
-    #print(depth.shape)
     df = pd.DataFrame(depth)
     df_inter = df.interpolate(limit_direction='both')
     df = df_inter.interpolate(limit_direction='both', axis=1)
@@ -381,11 +333,30 @@ def cal_zblocks(dir_conf, ns_corner, ew_corner, z_corner, dem, sea_level):
         for j in range(len(ns_corner)-1):
             zblocks[j,i] = np.where(z_corner >= depth[j,i])[0][0]
             block_depth[j,i] = z_corner[int(zblocks[j,i])]
-    with open(dir_conf['save'] + 'sl.txt', 'w') as f:
+    with open(settings['save_dir'] + '/sl.txt', 'w') as f:
         f.write('%.3f' % sea_level)
     return(zblocks, block_depth, sea_level)            
 
-def set_xyz(ns_set, ew_set, z_set, ns_lim, ew_lim, z_lim):    
+def set_xyz(settings):
+    ns_set = np.empty(0)
+    ew_set = np.empty(0)
+    z_set = np.empty(0)
+    ns = pd.read_table(settings['ns_set'], delim_whitespace = True)
+    for index, row in ns.iterrows():
+        ns_set = np.append(ns_set, np.full(int(row['num']), float(row['length'])))
+
+    ew = pd.read_table(settings['ew_set'], delim_whitespace = True)
+    for index, row in ew.iterrows():
+        ew_set = np.append(ew_set, np.full(int(row['num']), float(row['length'])))
+
+    z = pd.read_table(settings['z_set'], delim_whitespace = True)
+    for index, row in z.iterrows():
+        z_set = np.append(z_set, np.full(int(row['num']), float(row['length'])))
+    
+    ns_lim = float(settings['ns_lim'])
+    ew_lim = float(settings['ew_lim'])
+    z_lim = float(settings['z_lim'])
+
     znum0 = z_set.size
     z0 = z_set[-1]
     ns_set = cal_lim(ns_lim, ns_set)
@@ -402,18 +373,6 @@ def set_xyz(ns_set, ew_set, z_set, ns_lim, ew_lim, z_lim):
     z_corner = set_corner(z0, z_set)
     return(ns0, ew0, z0, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner)
 
-def set_initial_xyz():
-    ns_set = np.full(10, 250.)
-    ns_set = np.append(ns_set, np.full(10, 400.))
-    ew_set = np.full(10, 250.)
-    ew_set = np.append(ew_set, np.full(10, 400.))
-    z_set = np.full(28, 50.)
-    z_set = np.append(z_set, np.full(10, 100.))
-    ns_lim = float(settings['ns_lim'])
-    ew_lim = float(settings['ew_lim'])
-    z_lim = float(settings['z_lim'])
-    return(ns_set, ew_set, z_set, ns_lim, ew_lim, z_lim)
-
 def set_corner(xyz0, xyzset):
     corner = np.empty(len(xyzset)+1)
     corner[0] = xyz0
@@ -426,10 +385,10 @@ def cal_lim(lim, xyset):
         xyset = np.append(xyset, xyset[-1]*1.4)
     return(xyset)
         
-def cor_dem(dem):
+def cor_dem(dem, settings):
     origin = {'lon': float(settings['origin_lon']), 'lat': float(settings['origin_lat'])}
-    wgs84 = pyproj.Proj(init='EPSG:4326')  # WGS84 緯度経度
-    cartesian = pyproj.Proj(init=settings['cartesian'])  # JPR11 緯度経度
+    wgs84 = pyproj.Proj(init='EPSG:4326')
+    cartesian = pyproj.Proj(init=settings['cartesian'])
     x, y = pyproj.transform(wgs84, cartesian, dem['lon'].values, dem['lat'].values, always_xy=True)
     dem['EW'] = x
     dem['NS'] = y
@@ -438,9 +397,9 @@ def cor_dem(dem):
     dem['NS'] = dem['NS'] - origin_y
     return dem
     
-def get_dem(dir_conf):
-    sea_file = dir_conf['data'] + settings['seafile']
-    dem_file = dir_conf['data'] + settings['demfile']
+def get_dem(settings):
+    sea_file = settings['seafile']
+    dem_file = settings['demfile']
     local_dem = pd.read_table(dem_file, delim_whitespace = True, names=('lon', 'lat', 'hight'))
     sea_dem = pd.read_table(sea_file, delim_whitespace = True, names=('q', 'lat', 'lon', 'depth'))
     local_dem = local_dem[local_dem.hight != -9999.00]
@@ -449,16 +408,6 @@ def get_dem(dir_conf):
     sea_dem['depth'] = sea_dem['depth'] + sea_level
     dem = pd.merge(local_dem, sea_dem, how='outer')
     return (dem,sea_level)
-    
-
-def set_dir():
-    dir_conf = {
-    'work' : settings['work_dir'],
-    'data' : settings['data_dir'],
-    'save' : settings['save_dir']
-    }
-
-    return dir_conf
 
 if __name__ == "__main__":
     main()
