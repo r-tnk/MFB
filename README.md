@@ -34,16 +34,15 @@ Simple GUI software to carry out pre- and post- procesess for ModEM (Egbert and 
 
 1. Prepare DEM and bathymetry (if needed).
 2. Prepare the file with the latitude and longitude of the observation point.
-3. Find the EPSG code of the destination Cartesian coordinate system.
+3. Find the EPSG code of the destination Cartesian coordinate system.(https://epsg.io/)
 4. Launch MFB
 
     `$ python mfb_gui.py`
 
-5. Configure settings via GUI
-6. Make files
+5. Configure settings via GUI (Push 'Save Settings' Button)
+6. Make files (Push 'Make files' Button)
 7. Carry out the inversion via ModEM
-8. Launch MFB for post-process
-9. Carry out post-processes
+8. Carry out post-processes
 
 ## Installation
 
