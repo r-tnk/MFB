@@ -1,3 +1,4 @@
+from mimetypes import init
 from os import name
 import pandas as pd
 import pyproj
@@ -11,13 +12,7 @@ import configparser
 import matplotlib as mpl
 
 def main():
-    ini_path = '/Users/ryo/Desktop/MFB/settings.ini'
-    dict_vars = {}
-    set_smooth(dict_vars)
-    section_name = 'TEST'
-    #write_ini(ini_path, dict_vars, section_name)
-    config = read_ini(ini_path)
-    settings = config[section_name]
+    settings = '~/settings.ini'
     preprocess(settings)
     
 def preprocess(settings):
@@ -33,13 +28,12 @@ def preprocess(settings):
     save_cov(settings, ns_set, ew_set, z_set, msk)
     
 def mod_mdl(settings):
-    res = dir_conf['data'] + 'model.ws'
+    res = settings['in_wsfile']
     ns0, ew0, z0, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, ws = read_mdl(res)
-    cov_file = dir_conf['save'] + 'topo.txt'
+    cov_file = settings['covfile']
     cov = read_cov(cov_file)
-    ws = mdl2mdl(ws,cov)
-    wsfile = dir_conf['save'] + 'm2m.ws' 
-    save_ws(wsfile, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, ws)
+    ws = mdl2mdl(ws, cov, settings)
+    save_ws(settings, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, ws)
     
 def make_vtr(settings):
     res = settings['wsfile']
@@ -48,13 +42,6 @@ def make_vtr(settings):
     sl = settings['sl']
     sea_level = read_sl(sl)
     rho2vtk(ws, ns_corner, ew_corner, z_corner, sea_level, vtr)
-
-    
-    #hypo_ofile = dir_conf['save'] + 'hypo'
-    #hypo(dir_conf, hypo_ofile)
-    #pointsfile = '/Users/ryotanaka/Desktop/MFB/App211213/obscor.txt'
-    #fout = dir_conf['save'] + 'obs'
-    #point2vtk(pointsfile,sea_level, fout)
 
 def draw_res(datafile, resfile):
     head = ('T', 'STATION', 'a', 'b', 'NS', 'EW', 'Z', 'COMPONENT', 'real', 'imag', 'err')
@@ -129,31 +116,6 @@ def calc_rho(data):
     data['phase_err'] = np.degrees(np.arcsin(data['err']/data['amp']))
     return data
 
-#def set_vars():
-#    dict_vars = {
-    #'work_dir' : '/Users/ryotanaka/Desktop/MFB/App211213/',
-    #'data_dir' : '/Users/ryotanaka/Desktop/MFB/App211213/',
-    #'save_dir' : '/Users/ryotanaka/Desktop/MFB/App211213/',
-    #'demfile' : 'out.xyz',
-    #'seafile' : 'sea.txt',
-    #'obsfile' : 'obs.txt',
-    #'origin_lon' : '141.2413035',
-    #'origin_lat' : '45.1808162',
-    #'cartesian' : 'EPSG:6679',
-    #'ns_lim' : '5.e4',
-    #'ew_lim' : '5.e4',
-    #'z_lim' : '1.0e5',
-    #'x_min' : '-10000',
-    #'x_max' : '10000',
-    #'y_min' : '-10000',
-    #'y_max' : '10000',
-    #'covfile' : 'topo.cov',
-    #'covtxt' : 'topo.txt',
-    #'wsfile' : 'model.ws',
-    #'smooth' : '0.6'
-#    }
-#    return dict_vars
-
 def read_ini(config_path):
     config = configparser.ConfigParser()
     config.read(config_path, encoding='utf-8')
@@ -207,18 +169,18 @@ def mdl2mdl(ws, cov, change_condition):
     cov_trans = np.empty_like(ws)
     for k in range(ws.shape[2]):
         cov_trans[0:ws.shape[0],:,k] = np.flipud(cov[ws.shape[0]*(k):ws.shape[0]*(k+1),:])
-    ns_s = change_condition['ns_s']
-    ns_e = change_condition['ns_e']
-    ew_s = change_condition['ew_s']
-    ew_e = change_condition['ew_w']
-    z_s = change_condition['z_s']
-    z_e = change_condition['z_e']
+    ns_s = int(change_condition['ns_s'])
+    ns_e = int(change_condition['ns_e'])
+    ew_s = int(change_condition['ew_s'])
+    ew_e = int(change_condition['ew_e'])
+    z_s = int(change_condition['z_s'])
+    z_e = int(change_condition['z_e'])
     const = change_condition['const']
-    factor = change_condition['factor']
+    factor = float(change_condition['factor'])
     if const:
-        ws_mod = np.where(cov_trans == 1, factor, ws)
+        ws_mod = np.where(cov_trans == 1, math.log(factor), ws)
     else:
-        ws_mod = np.where(cov_trans == 1, ws*factor, ws)
+        ws_mod = np.where(cov_trans == 1, np.log(np.exp(ws)*factor), ws)
     ws[ns_s:ns_e, ew_s:ew_e, z_s:z_e] = ws_mod[ns_s:ns_e, ew_s:ew_e, z_s:z_e]
     return(ws)
 
@@ -425,8 +387,8 @@ def cal_lim(lim, xyset):
         
 def cor_dem(dem, settings):
     origin = {'lon': float(settings['origin_lon']), 'lat': float(settings['origin_lat'])}
-    wgs84 = pyproj.Proj(init='EPSG:4326')  # WGS84 緯度経度
-    cartesian = pyproj.Proj(init=settings['cartesian'])  # JPR11 緯度経度
+    wgs84 = pyproj.Proj(init='EPSG:4326')
+    cartesian = pyproj.Proj(init=settings['cartesian'])
     x, y = pyproj.transform(wgs84, cartesian, dem['lon'].values, dem['lat'].values, always_xy=True)
     dem['EW'] = x
     dem['NS'] = y

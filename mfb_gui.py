@@ -1,4 +1,4 @@
-import PySimpleGUI as sg                                 # パート 1 - インポート
+import PySimpleGUI as sg
 import mfb
 
 #sg.theme_previewer()
@@ -69,14 +69,33 @@ flame2 = sg.Frame('Make files for paraview', [
     [flame2_4]
     ])
 
+flame3_1= sg.Frame("Set files and directory",[
+    [sg.T("Choose Save Directory", size=(25,1)), sg.InputText("Choose Save Directory"), sg.FolderBrowse(key='save_dir_mdl')],
+    [sg.T("Choose file of resistivity model", size=(25,1)), sg.InputText("Choose file of resistivity model"), sg.FileBrowse(key='wsfile_mdl')],
+    [sg.T("Choose file of covfile (.txt not .cov)", size=(25,1)), sg.InputText("Choose file of covfile"), sg.FileBrowse(key='covfile_mdl')],
+    [sg.T("Enter savefile (*.ws)", size=(25,1)), sg.InputText("Enter savefile (*.ws)", key='ofile_mdl')],
+])
+
+flame3_2 = sg.Frame('Set parameters',[
+    [sg.T("Enter min and max of NS", size=(20,1)), sg.InputText("min", key='ns_min', size=3), sg.InputText("max", key='ns_max', size=3)],
+    [sg.T("Enter min and max of EW", size=(20,1)), sg.InputText("min", key='ew_min', size=3), sg.InputText("max", key='ew_max', size=3)],
+    [sg.T("Enter min and max of Z", size=(20,1)), sg.InputText("min", key='z_min', size=3), sg.InputText("max", key='z_max', size=3)],
+    [sg.T("Select mode", size=12), sg.Combo(values=['Constant', 'Multiply'], key='-pattern-')],
+    [sg.T("Enter constant resistivity value or factor", size=30)],
+    [sg.InputText("Enter constant resistivity value or factor", key='cf_num', size=30)]
+])
+
+flame3 = sg.Frame('Modify model for sensitivity check',[
+    [flame3_1, flame3_2],
+    [sg.Button('Modify model')]
+    ])
 
 
 tab2 = sg.Tab('Post-process',[
     [flame1],
     [flame2],
-    [sg.InputText("Choose setting file(*.ini)", key='-file-', enable_events=True,), sg.FileBrowse(key="ini_path")],
-    [sg.Combo(values=[''], size=(15,1), key='-section-', enable_events=True), sg.Checkbox('Create new section', key='newsec'), sg.InputText('Enter name of new section', key='sec_set')]
-])
+    [flame3]
+    ])
 
 layout = [[sg.TabGroup ([[tab1 ,tab2]])]]
 window = sg.Window("MFBver3.0", layout)
@@ -131,5 +150,26 @@ while True:
 
     if event == 'Make vtk for points':
         mfb.point2vtk(values['pointsfile'], values['slfile'], values['save_dir_post'] + '/' + values['vtk_point'])
+
+    if event == 'Modify model':
+        if values['-pattern-'] == 'Multiply':
+            const = False
+        else:
+            const = True    
+        settings_mdl = {
+            'save_dir': values['save_dir_mdl'],
+            'in_wsfile' : values['wsfile_mdl'],
+            'wsfile' : values['ofile_mdl'],
+            'covfile' : values['covfile_mdl'],
+            'ns_s': values['ns_min'],
+            'ns_e':values['ns_max'],
+            'ew_s':values['ew_min'],
+            'ew_e':values['ew_max'],
+            'z_s':values['z_min'],
+            'z_e':values['z_max'],
+            'const':const,
+            'factor':values['cf_num']
+        }
+        mfb.mod_mdl(settings_mdl)
 
 window.close()
