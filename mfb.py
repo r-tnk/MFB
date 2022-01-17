@@ -174,22 +174,21 @@ def read_ini(config_path):
     config.read(config_path, encoding='utf-8')
     return config
 
-def hypo(dir_conf, fout):
-    hfile = dir_conf['data'] + 'hypo.txt'
-    #hypoth = pd.read_table(hfile, delim_whitespace = True, names=('lon', 'lat', 'depth', 'm'))
+def hypo(fin, fout):
+    hfile = fin
     hypoth = pd.read_table(hfile, delim_whitespace = True, names=('EW', 'NS', 'depth', 'm'), dtype=float)
-    #cor_dem(hypoth)
     x = hypoth['EW'].to_numpy()
     y = hypoth['NS'].to_numpy()
     z = hypoth['depth'].to_numpy()
     m = hypoth['m'].to_numpy()
-    print(x,y,z,m)
     pointsToVTK(fout, x, y, z, data={'magnitude':m})
 
-def point2vtk(pointsfile,sea_level, fout):
-    point = pd.read_table(pointsfile, delim_whitespace = True,  dtype=float)
-    x = point['EW_reloc'].to_numpy()
-    y = point['NS_reloc'].to_numpy()
+def point2vtk(pointsfile, slfile, fout):
+    sea_level = read_sl(slfile)
+    type = {'EW':float, 'NS':float, 'depth':float}
+    point = pd.read_table(pointsfile, delim_whitespace = True,  dtype=type)
+    x = point['EW'].to_numpy()
+    y = point['NS'].to_numpy()
     z = sea_level - point['depth'].to_numpy()
     print(x,y,z)
     pointsToVTK(fout, x, y, z) 

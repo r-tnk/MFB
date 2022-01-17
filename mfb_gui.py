@@ -34,18 +34,40 @@ tab1 = sg.Tab('Pre-Process', [
 ])
 
 flame1 = sg.Frame('Draw apparent resistivity and phase', [
-    [sg.InputText("Choose datafile"), sg.FileBrowse(key='datafile')],
-    [sg.InputText("Choose result file (*.dat)"), sg.FileBrowse(key='resfile')],
+    [sg.T("Choose datafile", size=(25,1)), sg.InputText("Choose datafile"), sg.FileBrowse(key='datafile')],
+    [sg.T("Choose result file (*.dat)", size=(25,1)), sg.InputText("Choose result file (*.dat)"), sg.FileBrowse(key='resfile')],
     [sg.Button('Draw Result')]
 ])
 
-flame2 = sg.Frame('Make files for paraview', [
-    [sg.InputText("Choose Save Directory"), sg.FolderBrowse(key='save_dir_post')],
-    [sg.InputText("Choose result file (model file, *.ws)"), sg.FileBrowse(key='wsfile_post')],
-    [sg.InputText("Choose sealevel file"), sg.FileBrowse(key='slfile')],
-    [sg.InputText("Enter savefile (without extension)", key='vtr')],
+flame2_1 = sg.Frame("Required items", [
+    [sg.T("Choose Save Directory", size=(25,1)), sg.InputText("Choose Save Directory"), sg.FolderBrowse(key='save_dir_post')],
+    [sg.T("Choose sealevel file", size=(25,1)), sg.InputText("Choose sealevel file"), sg.FileBrowse(key='slfile')]
+], background_color='grey66')
+
+flame2_2 = sg.Frame("Make vtr of resistivity distribution", [
+    [sg.T("Choose result file (model file, *.ws)", size=(25,1)), sg.InputText("Choose result file (model file, *.ws)"), sg.FileBrowse(key='wsfile_post')],
+    [sg.T("Enter savefile (without extension)", size=(25,1)), sg.InputText("Enter savefile (without extension)", key='vtr')],
     [sg.Button('Make vtr')]
 ])
+
+flame2_3 = sg.Frame("Make vtk for hypocenters",[
+    [sg.T("Choose file of hypocenters", size=(25,1)), sg.InputText("Choose file of hypocenters"), sg.FileBrowse(key='hypofile')],
+    [sg.T("Enter savefile (without extension)", size=(25,1)), sg.InputText("Enter savefile (without extension)", key='vtk_hypo')],
+    [sg.Button('Make vtk for hypocenters')]
+], background_color='grey66')
+
+flame2_4 = sg.Frame("Make vtk for points",[
+    [sg.T("Choose file of points", size=(25,1)), sg.InputText("Choose file of points"), sg.FileBrowse(key='pointsfile')],
+    [sg.T("Enter savefile (without extension)", size=(25,1)), sg.InputText("Enter savefile (without extension)", key='vtk_point')],
+    [sg.Button('Make vtk for points')]
+])
+
+flame2 = sg.Frame('Make files for paraview', [
+    [flame2_1],
+    [flame2_2],
+    [flame2_3],
+    [flame2_4]
+    ])
 
 
 
@@ -103,5 +125,11 @@ while True:
             'save_dir':values['save_dir_post']
         }
         mfb.make_vtr(settings_vtr)
+
+    if event == 'Make vtk for hypocenters':
+        mfb.hypo(values['hypofile'], values['save_dir_post'] + '/' + values['vtk_hypo'])
+
+    if event == 'Make vtk for points':
+        mfb.point2vtk(values['pointsfile'], values['slfile'], values['save_dir_post'] + '/' + values['vtk_point'])
 
 window.close()
