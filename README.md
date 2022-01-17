@@ -1,3 +1,4 @@
+[日本語版 README はこちら](https://github.com/r-tnk/MFB/blob/main/README-ja.md)
 # MFB (ModEM File Builder)
 
 ## Overview
