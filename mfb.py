@@ -16,7 +16,6 @@ def main():
     preprocess(settings)
     
 def preprocess(settings):
-    ###Pre-process###
     dem, sea_level = get_dem(settings)
     dem = cor_dem(dem, settings)
     ns0, ew0, z0, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner = set_xyz(settings)
