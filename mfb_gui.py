@@ -33,7 +33,25 @@ tab1 = sg.Tab('Pre-Process', [
    [sg.Button('Save Settings'), sg.Button('Make files'), sg.Button('Done')],
 ])
 
+flame1 = sg.Frame('Draw apparent resistivity and phase', [
+    [sg.InputText("Choose datafile"), sg.FileBrowse(key='datafile')],
+    [sg.InputText("Choose result file (*.dat)"), sg.FileBrowse(key='resfile')],
+    [sg.Button('Draw Result')]
+])
+
+flame2 = sg.Frame('Make files for paraview', [
+    [sg.InputText("Choose Save Directory"), sg.FolderBrowse(key='save_dir_post')],
+    [sg.InputText("Choose result file (model file, *.ws)"), sg.FileBrowse(key='wsfile_post')],
+    [sg.InputText("Choose sealevel file"), sg.FileBrowse(key='slfile')],
+    [sg.InputText("Enter savefile (without extension)", key='vtr')],
+    [sg.Button('Make vtr')]
+])
+
+
+
 tab2 = sg.Tab('Post-process',[
+    [flame1],
+    [flame2],
     [sg.InputText("Choose setting file(*.ini)", key='-file-', enable_events=True,), sg.FileBrowse(key="ini_path")],
     [sg.Combo(values=[''], size=(15,1), key='-section-', enable_events=True), sg.Checkbox('Create new section', key='newsec'), sg.InputText('Enter name of new section', key='sec_set')]
 ])
@@ -73,8 +91,17 @@ while True:
         config = mfb.read_ini(values['ini_path'])
         settings = config[section]
         mfb.preprocess(settings)
-        
 
-            
+    if event == 'Draw Result':
+        mfb.draw_res(values['datafile'], values['resfile'])
+        
+    if event == 'Make vtr':
+        settings_vtr = {
+            'wsfile':values['wsfile_post'],
+            'vtr':values['vtr'],
+            'sl':values['slfile'],
+            'save_dir':values['save_dir_post']
+        }
+        mfb.make_vtr(settings_vtr)
 
 window.close()

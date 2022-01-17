@@ -32,33 +32,29 @@ def preprocess(settings):
     save_ws(settings, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, rho)
     save_cov(settings, ns_set, ew_set, z_set, msk)
     
-    ###Post-process###)
-    #res = dir_conf['data'] + 'model.ws'
-    #ns0, ew0, z0, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, ws = read_mdl(res)
-    #cov_file = dir_conf['save'] + 'topo.txt'
-    #cov = read_cov(cov_file)
-    #ws = mdl2mdl(ws,cov)
-    #wsfile = dir_conf['save'] + 'm2m.ws' 
-    #save_ws(wsfile, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, ws)
-    #vtr = dir_conf['save'] + 'rho'
-    #gridToVTK(vtr, ns_corner, ew_corner, z_corner, cellData = {"resistivity" : np.log10(np.exp(ws))})
-    #sl = dir_conf['save'] + 'sl.txt'
-    #sea_level = read_sl(sl)
-    #rho2vtk(ws, ns_corner, ew_corner, z_corner, sea_level, vtr)
+def mod_mdl(settings):
+    res = dir_conf['data'] + 'model.ws'
+    ns0, ew0, z0, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, ws = read_mdl(res)
+    cov_file = dir_conf['save'] + 'topo.txt'
+    cov = read_cov(cov_file)
+    ws = mdl2mdl(ws,cov)
+    wsfile = dir_conf['save'] + 'm2m.ws' 
+    save_ws(wsfile, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, ws)
+    
+def make_vtr(settings):
+    res = settings['wsfile']
+    ns0, ew0, z0, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, ws = read_mdl(res)    
+    vtr = settings['save_dir'] + '/' + settings['vtr']
+    sl = settings['sl']
+    sea_level = read_sl(sl)
+    rho2vtk(ws, ns_corner, ew_corner, z_corner, sea_level, vtr)
+
+    
     #hypo_ofile = dir_conf['save'] + 'hypo'
     #hypo(dir_conf, hypo_ofile)
     #pointsfile = '/Users/ryotanaka/Desktop/MFB/App211213/obscor.txt'
     #fout = dir_conf['save'] + 'obs'
     #point2vtk(pointsfile,sea_level, fout)
-    #datafile = '/Users/ryotanaka/Desktop/MFB/App211213/DATA.dat'
-    #resfile = '/Users/ryotanaka/Desktop/MFB/App211213/TKC_NLCG_026.dat'
-    #datafile = '/Users/ryo/Desktop/MFB/DATA.dat'
-    #resfile = '/Users/ryo/Desktop/MFB/TKC_NLCG_026.dat'
-    #draw_res(datafile, resfile)
-
-
-def set_smooth(dict_vars):
-    dict_vars['smooth'] = '0.4'
 
 def draw_res(datafile, resfile):
     head = ('T', 'STATION', 'a', 'b', 'NS', 'EW', 'Z', 'COMPONENT', 'real', 'imag', 'err')
