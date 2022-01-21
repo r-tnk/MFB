@@ -153,8 +153,8 @@ def hypo(fin, fout):
 
 def point2vtk(pointsfile, slfile, fout):
     sea_level = read_sl(slfile)
-    type = {'EW':float, 'NS':float, 'depth':float}
-    point = pd.read_table(pointsfile, delim_whitespace = True,  dtype=type)
+    dict_type = {'EW':float, 'NS':float, 'depth':float}
+    point = pd.read_table(pointsfile, delim_whitespace = True,  dtype=dict_type)
     x = point['EW'].to_numpy()
     y = point['NS'].to_numpy()
     z = sea_level - point['depth'].to_numpy()
@@ -168,9 +168,9 @@ def read_sl(sl):
 
 def rho2vtk(ws, ns_corner, ew_corner, z_corner, sea_level, vtr):
     for k in range(ws.shape[2]):
-        ws[:,:,k] = np.fliplr(ws[:,:,k].T)
+        ws[:,:,k] = ws[:,:,k].T
     gridToVTK(vtr, ew_corner, ns_corner, sea_level-z_corner, cellData = {"resistivity" : np.log10(np.exp(ws))})
-
+    
 def mdl2mdl(ws, cov, change_condition):
     cov_trans = np.empty_like(ws)
     for k in range(ws.shape[2]):
