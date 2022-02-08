@@ -175,7 +175,7 @@ while True:
         if values['-pattern-'] == 'Multiply':
             const = False
         else:
-            const = True    
+            const = True  
         settings_mdl = {
             'save_dir': values['save_dir_mdl'],
             'in_wsfile' : values['wsfile_mdl'],
