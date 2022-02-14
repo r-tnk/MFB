@@ -1,9 +1,14 @@
 import PySimpleGUI as sg
+from screeninfo import get_monitors
 import mfb
 
 #sg.theme_previewer()
 sg.theme('dark')
 sg.set_options(font=('Meiriyo UI', 14))
+
+inputbox_size = (30,1)
+textbox_size = (17,1)
+button_size = (15,1)
 
 frame0_1 = sg.Frame('Set Files and Directory', [
     [sg.T("save_dir", text_color='black', background_color='azure', size=(17,1), justification='center'), sg.Text(size=(30,1), key='save_dir'), sg.Checkbox('Update to', key='save_dir_up'), sg.InputText("Set directory to save"), sg.FolderBrowse(key="save_dir_set")],
@@ -40,13 +45,13 @@ frame0_4 = sg.Frame('Set output files', [
 ])
 
 tab1 = sg.Tab('Pre-Process', [
-   [sg.InputText("1. Choose setting file(*.ini)", key='-file-', enable_events=True), sg.FileBrowse(key="ini_path")],
-   [sg.T("2. Choose section", size=(20,1)), sg.Combo(values=[''], size=(15,1), key='-section-', enable_events=True), sg.Checkbox('Create new section', key='newsec'), sg.InputText('Enter name of new section', key='sec_set')],
-   [frame0_1],
-   [frame0_2],
-   [frame0_3],
-   [frame0_4],   
-   [sg.Button('3. Save Settings'), sg.Button('4. Make files'), sg.Button('Done')],
+    [sg.InputText("1. Choose setting file(*.ini)", key='-file-', enable_events=True), sg.FileBrowse(key="ini_path")],
+    [sg.T("2. Choose section", size=(20,1)), sg.Combo(values=[''], size=(15,1), key='-section-', enable_events=True), sg.Checkbox('Create new section', key='newsec'), sg.InputText('Enter name of new section', key='sec_set')],
+    [frame0_1],
+    [frame0_2],
+    [frame0_3],
+    [frame0_4],   
+    [sg.Button('3. Save Settings'), sg.Button('4. Make files'), sg.Button('Done')],
 ])
 
 flame1 = sg.Frame('Draw apparent resistivity and phase', [
@@ -113,8 +118,10 @@ tab2 = sg.Tab('Post-process',[
     [flame3]
     ])
 
+monitor = get_monitors()[0]
+window_size = (monitor.width, monitor.height)
 layout = [[sg.TabGroup ([[tab1 ,tab2]])]]
-window = sg.Window("MFBver3.0", layout)
+window = sg.Window("MFBver3.0", layout, size=window_size, resizable=True)
 dict_vars ={}
 
 while True:
