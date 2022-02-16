@@ -314,7 +314,7 @@ def cal_obs_point(settings, ns_corner, ew_corner, block_depth):
 
 def plot_fig(settings, ns_corner, ew_corner, block_depth, sea_level, obs):
     fig, ax = plt.subplots(figsize=(15, 15))
-    cs = ax.pcolormesh(ns_corner, ew_corner, block_depth, cmap='gist_earth_r', edgecolors="w", linewidth=0.01)
+    cs = ax.pcolormesh(ew_corner, ew_corner, block_depth, cmap='gist_earth_r', edgecolors="w", linewidth=0.01)
     ax.set_xlim([float(settings['x_min']),float(settings['x_max'])])
     ax.set_ylim([float(settings['y_min']),float(settings['y_max'])])
     fig.colorbar(cs, label = 'depth [m]')
