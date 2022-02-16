@@ -304,7 +304,7 @@ def cal_obs_point(settings, ns_corner, ew_corner, block_depth):
         j = int(np.where(ew_corner >= row['EW'])[0][0])
         i = int(np.where(ns_corner >= row['NS'])[0][0])
         obs.at[index, 'EW_reloc'] = (ew_corner[j-1] + ew_corner[j])/2.
-        obs.at[index, 'NS_reloc'] = (ns_corner[i-1] + ew_corner[i])/2.
+        obs.at[index, 'NS_reloc'] = (ns_corner[i-1] + ns_corner[i])/2.
         obs.at[index, 'depth'] = block_depth[i-1,j-1]
     obs['EW'] = obs['EW_reloc']
     obs['NS'] = obs['NS_reloc']
@@ -314,7 +314,7 @@ def cal_obs_point(settings, ns_corner, ew_corner, block_depth):
 
 def plot_fig(settings, ns_corner, ew_corner, block_depth, sea_level, obs):
     fig, ax = plt.subplots(figsize=(15, 15))
-    cs = ax.pcolormesh(ew_corner, ew_corner, block_depth, cmap='gist_earth_r', edgecolors="w", linewidth=0.01)
+    cs = ax.pcolormesh(ew_corner, ns_corner, block_depth, cmap='gist_earth_r', edgecolors="w", linewidth=0.01)
     ax.set_xlim([float(settings['x_min']),float(settings['x_max'])])
     ax.set_ylim([float(settings['y_min']),float(settings['y_max'])])
     fig.colorbar(cs, label = 'depth [m]')
@@ -373,7 +373,7 @@ def set_xyz(settings):
     while(z_lim > z_set.sum()):
         z_set = np.append(z_set, z0 * np.exp(z_set.size - znum0 + 1))
     ns0 = -(ns_set.sum())
-    ew0 = -(ns_set.sum())
+    ew0 = -(ew_set.sum())
     z0 = 0.
     ns_set = np.concatenate([np.flip(ns_set), ns_set])
     ew_set = np.concatenate([np.flip(ew_set), ew_set])
