@@ -22,7 +22,7 @@ def preprocess(settings):
     zblocks, block_depth, sea_level = cal_zblocks(settings, ns_corner, ew_corner, z_corner, dem, sea_level)
     obs = cal_obs_point(settings, ns_corner, ew_corner, block_depth)
     plot_fig(settings, ns_corner, ew_corner, block_depth, sea_level, obs)
-    rho, msk = get_ws_cov(zblocks, ns_set, ew_set, z_set, sea_level, z_corner)
+    rho, msk = get_ws_cov(settings, zblocks, ns_set, ew_set, z_set, sea_level, z_corner)
     save_ws(settings, ns_set, ew_set, z_set, ns_corner, ew_corner, z_corner, rho)
     save_cov(settings, ns_set, ew_set, z_set, msk)
     for file in settings['pointfiles'].split(';'):
@@ -217,9 +217,9 @@ def read_mdl(fin):
         ws[0:ns_set.shape[1],:,k] = np.flipud(rho[ns_set.shape[1]*(k):ns_set.shape[1]*(k+1),:].T)
     return(ns0, ew0, z0, ns_set.reshape(ns_set.shape[1]), ew_set.reshape(ew_set.shape[1]), z_set.reshape(z_set.shape[1]), ns_corner, ew_corner, z_corner, ws)
     
-def get_ws_cov(zblocks, ns_set, ew_set, z_set, sea_level, z_corner):
+def get_ws_cov(settings, zblocks, ns_set, ew_set, z_set, sea_level, z_corner):
     cov = {'land':1, 'air':0, 'sea':9}
-    ws = {'land':math.log(100), 'air': math.log(1e8), 'sea':math.log(0.3)}
+    ws = {'land':math.log(settings['land']), 'air': math.log(1e8), 'sea':math.log(0.3)}
     rho = np.empty((len(ns_set), len(ew_set), len(z_set)))
     msk = np.empty((len(ns_set), len(ew_set), len(z_set)))
     for k in range(len(z_set)):

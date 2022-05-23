@@ -13,7 +13,7 @@ frame0_1 = sg.Frame('Set Files and Directory', [
     [sg.T("pointfiles", text_color='black', background_color='azure', size=(17,1), justification='center'), sg.Text(size=(30,1), key='pointfiles'), sg.Checkbox('Update to', key='pointfiles_up'), sg.InputText("Set files of hypoceners and others"), sg.FilesBrowse(key="pointfiles_set")]
 ])
 
-frame0_2 = sg.Frame('Set grid and smoothness',[
+frame0_2 = sg.Frame('Set grid , initial resistivity value and smoothness',[
     [sg.T("origin_lon", text_color='black', background_color='azure', size=(17,1), justification='center'), sg.Text(size=(30,1), key='origin_lon'), sg.Checkbox('Update to', key='origin_lon_up'), sg.InputText("Enter longitude of origin", key='origin_lon_set')],
     [sg.T("origin_lat", text_color='black', background_color='azure', size=(17,1), justification='center'), sg.Text(size=(30,1), key='origin_lat'), sg.Checkbox('Update to', key='origin_lat_up'), sg.InputText("Enter latitude of origin", key='origin_lat_set')],
     [sg.T("catesian", text_color='black', background_color='azure', size=(17,1), justification='center'), sg.Text(size=(30,1), key='cartesian'), sg.Checkbox('Update to', key='cartesian_up'), sg.InputText("Enter cartesian", key='cartesian_set')],
@@ -23,6 +23,7 @@ frame0_2 = sg.Frame('Set grid and smoothness',[
     [sg.T("ns_lim", text_color='black', background_color='azure', size=(17,1), justification='center'), sg.Text(size=(30,1), key='ns_lim'), sg.Checkbox('Update to', key='ns_lim_up'), sg.InputText("Enter ns_lim", key='ns_lim_set')],
     [sg.T("ew_lim", text_color='black', background_color='azure', size=(17,1), justification='center'), sg.Text(size=(30,1), key='ew_lim'), sg.Checkbox('Update to', key='ew_lim_up'), sg.InputText("Enter ew_lim", key='ew_lim_set')],
     [sg.T("z_lim", text_color='black', background_color='azure', size=(17,1), justification='center'), sg.Text(size=(30,1), key='z_lim'), sg.Checkbox('Update to', key='z_lim_up'), sg.InputText("Enter z_lim", key='z_lim_set')],
+    [sg.T("initial resistivity value", text_color='black', background_color='azure', size=(17,1), justification='center'), sg.Text(size=(30,1), key='land'), sg.Checkbox('Update to', key='land_up'), sg.InputText("Enter initail resistivity value", key='land_set')],
     [sg.T("smooth", text_color='black', background_color='azure', size=(17,1), justification='center'), sg.Text(size=(30,1), key='smooth'), sg.Checkbox('Update to', key='smooth_up'), sg.InputText("Enter smoothing parameter(0 - 1)", key='smooth_set')]
 ])
 
