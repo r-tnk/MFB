@@ -49,6 +49,14 @@ Simple GUI software to carry out pre- and post- procesess for ModEM (Egbert and 
 
     $ git clone https://github.com/r-tnk/MFB.git
 
+## Preparing files
+
+### DEM
+
+- The DEM is not needed to be sorted. 
+- The DEM is needed to be separated from the bathemerty.
+- A missing value of the DEM is filled by "-9999.00".
+
 ## Author
 
 [R. Tanaka](https://www.researchgate.net/profile/Ryo-Tanaka-12)
