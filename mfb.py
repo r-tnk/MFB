@@ -219,7 +219,7 @@ def read_mdl(fin):
     
 def get_ws_cov(settings, zblocks, ns_set, ew_set, z_set, sea_level, z_corner):
     cov = {'land':1, 'air':0, 'sea':9}
-    ws = {'land':math.log(settings['land']), 'air': math.log(1e8), 'sea':math.log(0.3)}
+    ws = {'land':math.log(float(settings['land'])), 'air': math.log(1e8), 'sea':math.log(0.3)}
     rho = np.empty((len(ns_set), len(ew_set), len(z_set)))
     msk = np.empty((len(ns_set), len(ew_set), len(z_set)))
     for k in range(len(z_set)):
